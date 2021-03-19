@@ -1,0 +1,15 @@
+[.]git
+[.]gitignore
+qcParser
+trialData
+speedTests
+internalDocs
+test-9-rud
+test-7-naep
+test-2.9-comp
+test-4-parse
+test-8
+stable_helpers
+parse[.]R
+[.]DS_Store
+README[.]md

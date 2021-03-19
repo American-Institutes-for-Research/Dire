@@ -1,0 +1,23 @@
+test = "composite" id=1 scale=1 location=0
+  subtest = "num" id=1 scale=37.7297 location=277.1563 weight=0.3
+  subtest = "alg" id=2 scale=36.3887 location=280.2948 weight=0.7
+
+Variables
+
+m109801 IRM=3pl ipa=0.96 ipb=-0.37 ipc=0.16 scale=1.7 ontest=1 onsubtest=1 omitted=99
+m020001 IRM=3pl ipa=0.69 ipb=-0.55 ipc=0 scale=1.7 ontest=1 onsubtest=1 omitted=99
+m111001 IRM=3pl ipa=0.83 ipb=0.85 ipc=0.17 scale=1.7 ontest=1 onsubtest=1 omitted=99
+m046301 IRM=3pl ipa=0.99 ipb=-0.97 ipc=0.31 scale=1.7 ontest=1 onsubtest=1 omitted=99
+m046501 IRM=3pl ipa=1.03 ipb=-0.14 ipc=0.37 scale=1.7 ontest=1 onsubtest=1 omitted=99
+m051501 IRM=3pl ipa=0.97 ipb=1.21 ipc=0.18 scale=1.7 ontest=1 onsubtest=1 omitted=99
+m111601 IRM=3pl ipa=1.45 ipb=0.53 ipc=0.28 scale=1.7 ontest=1 onsubtest=2 omitted=99
+m111301 IRM=3pl ipa=0.59 ipb=-1.84 ipc=0.15 scale=1.7 ontest=1 onsubtest=2 omitted=99
+m111201 IRM=3pl ipa=0.34 ipb=-0.46 ipc=0.09 scale=1.7 ontest=1 onsubtest=2 omitted=99
+m110801 IRM=3pl ipa=0.18 ipb=2.43 ipc=0.05 scale=1.7 ontest=1 onsubtest=2 omitted=99
+m110101 IRM=3pl ipa=1.2 ipb=0.7 ipc=0.18 scale=1.7 ontest=1 onsubtest=2 omitted=99
+m0757cl ontest=1 onsubtest=2 IRM=PCL ipa=0.43 ipb=-1.21 ipd1=2.38  ipd2=-0.57  ipd3=-1.18  scale=1.7 omitted=99
+m066501 ontest=1 onsubtest=2 IRM=PCL ipa=0.52 ipb=-0.96 ipd1=-0.56  ipd2=0.56  scale=1.7 omitted=99
+
+origwt type=R design=W
+repgrp1 type=R design=S
+jkunit type=R design=C
