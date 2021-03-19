@@ -1,0 +1,6 @@
+test = "composite" id=1 scale=1 location=0
+  subtest = "num" id=1 scale=37.7297 location=277.1563 weight=0.3
+  subtest = "alg" id=2 scale=36.3887 location=280.2948 weight=0.7
+
+Variables
+
