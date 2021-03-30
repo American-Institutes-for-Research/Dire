@@ -344,7 +344,7 @@ mml <- function(formula,
       co <- resi$coefficients
       # remove standard deviation
       Xbi <- as.vector(resi$X %*% co[-length(co)])
-      Xbdf <- data.frame(id=rownames(resi$X), xb=Xbi)
+      Xbdf <- data.frame(id=rownames(resi$X), xb=Xbi, stringsAsFactors=FALSE)
       colnames(Xbdf)[2] <- paste0("Xb",sti)
       if(sti > 1) {
         Xb <- merge(Xb, Xbdf, by="id", all=TRUE)
