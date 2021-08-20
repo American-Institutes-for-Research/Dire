@@ -1,8 +1,8 @@
 Package: Dire
-Version: 1.0.3
-Date: 2021-03-17
+Version: 1.0.3.9000
+Date: 2021-08-19
 Title: Linear Regressions with a Latent Outcome Variable
-Authors@R: c(person("Emmanuel", "Sikali", role=c("aut", "pdr"), email = "Emmanuel.Sikali@ed.gov"), 
+Authors@R: c(person("Emmanuel", "Sikali", role="pdr", email = "Emmanuel.Sikali@ed.gov"),
              person("Harold", "Doran", role="aut"),
              person("Paul", "Bailey", role=c("aut", "cre"), email="pbailey@air.org"),
              person("Eric", "Buehler", role="aut"),
@@ -14,7 +14,8 @@ Imports: minqa, foreach, iterators, methods, Matrix, haven, Rcpp
 Description: Fit linear models, estimating score distributions for groups of people, following Cohen and Jiang (1999) <doi:10.2307/2669917>. In this model, the response is a latent trait (such as student ability) and raw item responses are combined with item difficulties in an item response theory (IRT) framework to form a density for each unit (student). This latent trait is then integrated out. This software is intended to fit the same models as the existing software 'AM' <http://am.air.org/>.
 License: GPL-2
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, testthat, withr, doParallel, EdSurvey
+Suggests: knitr, rmarkdown, testthat, withr, doParallel, EdSurvey (>=
+        2.7.0)
 URL: https://american-institutes-for-research.github.io/Dire/
 BugReports: https://github.com/American-Institutes-for-Research/Dire/issues
 ByteCompile: true
@@ -26,9 +27,8 @@ Encoding: UTF-8
 RoxygenNote: 7.1.1
 LinkingTo: Rcpp
 NeedsCompilation: yes
-Packaged: 2021-04-01 13:44:21 UTC; ebuehler
-Author: 
-  Emmanuel Sikali [aut, pdr],
+Packaged: 2021-08-20 21:26:22 UTC; ebuehler
+Author: Emmanuel Sikali [pdr],
   Harold Doran [aut],
   Paul Bailey [aut, cre],
   Eric Buehler [aut],

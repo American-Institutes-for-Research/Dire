@@ -91,7 +91,26 @@ mmlA <- mml(alg ~ dsex,
             idVar="sid", weightVar="origwt", # these are column names on stuDat
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
-summary(mmlA, varType="Taylor")
+mmlAs <- summary.mmlMeans(mmlA, varType="Taylor")
+
+
+# estimate a regression for Numeracy subscale
+mmlN <- mml(num ~ dsex,
+            stuItems=stuItems, stuDat=stuDat,
+            dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
+            testScale=testDat,
+            idVar="sid", weightVar="origwt", # these are column names on stuDat
+            strataVar="repgrp1", PSUVar="jkunit")
+# summary, with Taylor standard errors
+mmlNs <- summary.mmlMeans(mmlN, varType="Taylor")
+mmlNs
+
+set.seed(2)
+head(pvd <- drawPVs.mmlMeans(mmlA))
+head(pvs <- drawPVs.mmlMeans(summary.mmlMeans(mmlA, varType="Taylor"), stochasticBeta=T))
+sd(apply(pvd[,-1], 2, mean))
+sd(apply(pvs[,-1], 2, mean)) # should be larger, accounts for uncertainty in beta
+
 
 # composite regression 
 mmlC <- mml(composite ~ dsex ,
@@ -102,5 +121,11 @@ mmlC <- mml(composite ~ dsex ,
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
 summary(mmlC, varType="Taylor")
+
+set.seed(2)
+head(pvd <- drawPVs.mmlCompositeMeans(mmlC))
+mmlCs <- summary.mmlCompositeMeans(mmlC, varType="Taylor")
+head(pvs <- drawPVs.mmlCompositeMeans(mmlCs, stochasticBeta=TRUE))
+
 
 }

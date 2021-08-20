@@ -215,7 +215,7 @@ mmlC <- mml(composite ~ dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAs
             Q=34, idVar="sid", testScale=testDat, composite=TRUE, weightVar="origwt",
             minNode = -4, maxNode = 4, bobyqaControl=list(maxfun=1e4),
             strataVar="repgrp1", PSUVar="jkunit")
-mmlCTaylor <- summary(mmlC, varType="Taylor", gradientHessian=TRUE, strataVar="repgrp1", PSUVar="jkunit")
+mmlCTaylor <- summary(mmlC, varType="Taylor", gradientHessian=TRUE)
 
 # MML Composite Regression	
 # Run completed on Wednesday, December 09, 2020. 12:54:46 PM

@@ -37,6 +37,12 @@ colnames(mat) <- c("m017401", "m017701", "m017901", "m018201", "m018401",
 testDat <- data.frame(location=c(277.1563),
                       scale=c(37.7297))
 
+testDat <- data.frame(test=c("composite", "composite","composite") ,
+                      subtest=c("num", "alg",NA),
+                      location=c(277.1563, 280.2948,277.1563),
+                      scale=c(37.7297, 36.3887, 37.7297),
+                      subtestWeight=c(0.3,0.7,1))
+
 mat <- data.frame(mat)
 rownames(mat) <- paste0("pseudo-student",1:nrow(mat))
 mat$origwt <- 1
@@ -53,16 +59,16 @@ stuDat$oppID <- rownames(stuDat)
 ############### test functions ###############
 mat$x1 <- stuDat$x1 <- x1
 stuDat$origwt <- mat$origwt <- runif(nrow(stuDat)) * 4 * abs(stuDat$x1 + 3)
-
 # write "mat" here to compare to AM
 
 # tests:
 context("mml works") #When this fails all regression tests are invalid.
-mml1 <- mml(stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+
+mml1 <- mml(composite ~ 1, stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
 expect_is(mml1, "mmlMeans")
 context("mml errors") #When this fails all regression tests are invalid.
-expect_error(mml1 <- mml(stuItems=stuItems[1:100,], stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat), "pseudo-student101")
-expect_error(mml1 <- mml(stuItems=stuItems, stuDat=stuDat[-11,], dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat), "pseudo-student11")
+expect_error(mml1 <- mml(composite ~ 1, stuItems=stuItems[1:100,], stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat), "pseudo-student101")
+expect_error(mml1 <- mml(composite ~ 1, stuItems=stuItems, stuDat=stuDat[-11,], dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat), "pseudo-student11")
 
 context("mml summary and variance estimation") #When this fails all regression tests are invalid.
 expect_equal(mml1$coefficients, c(`(Intercept)` = 0.116721240655054, "Population SD" = 0.972350274042811))
@@ -86,21 +92,23 @@ expect_equal(mml1Robust$coef[,"StdErr"], mml1R_SE_REF, tolerance=sqrt(.Machine$d
 
 mml1SPrintRef <- c(
   "Call:",
-  "mml(stuItems = stuItems, stuDat = stuDat, idVar = \"oppID\", dichotParamTab = dichotParamTab, ", 
-  "    testScale = testDat, Q = 34, composite = FALSE)", "Summary Call:", 
-  "summary.mmlMeans(object = mml1, varType = \"robust\")", "", 
+  "mml(formula = composite ~ 1, stuItems = stuItems, stuDat = stuDat, ",
+  "    idVar = \"oppID\", dichotParamTab = dichotParamTab, testScale = testDat, ",
+  "    Q = 34, composite = FALSE)", "Summary Call:", "summary.mmlMeans(object = mml1, varType = \"robust\")",
+  "",
   "Summary:",
   "            Estimate  StdErr t.value",
-  "(Intercept)  281.560   0.975     289", 
+  "(Intercept)  281.560   0.975     289",
   "",
   "Residual Variance Estimate:",
   "              Estimate StdErr", 
   "Population SD       37   0.91",
   "",
-  "Convergence = Normal exit from bobyqa", 
-  # do not check iterations
-  "LogLike = -12438.48",
-  "Observations = 2000")
+  "Convergence = converged", 
+  "LogLike = -12438.48", 
+  "Observations = 2000", 
+  "Weighted observations = 2000", 
+  "location = 277.1563 scale = 37.7297")
 
 withr::with_options(list(digits=2), # accuracy is not the point here, the output is.
                     mml1SPrint <- capture.output(mml1Robust))
@@ -118,7 +126,7 @@ expect_equal(mml1Cluster$coef[,"StdErr"], mml1C_SE_REF, tolerance=sqrt(.Machine$
 
 
 
-mml2 <- mml(~x1, stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+mml2 <- mml(composite ~x1, stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
 expect_is(mml2, "mmlMeans")
 expect_equal(mml2$coefficients, c(`(Intercept)` = 0.00592827512675005, x1 = 0.224670345051881, "Population SD" = 0.970126544720125), tolerance=sqrt(.Machine$double.eps)*200)
 mml2s <- summary(mml2, gradientHessian=TRUE)
@@ -143,7 +151,7 @@ expect_equal(mml2Cluster$coef[,"StdErr"], mml2C_SE_REF, tolerance=(.Machine$doub
 
 context("weighted case")
 
-mml2W <- mml(~x1,stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", weightVar="origwt", testScale=testDat, composite=FALSE)
+mml2W <- mml(composite~x1,stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", weightVar="origwt", testScale=testDat, composite=FALSE)
 mml2s_coef_REF <- structure(c(276.78360779, 9.90868559817, 36.9630033481, 
                               2.1549072924, 3.85424777114, 1.06630035114),
                             .Dim = c(3L, 2L), .Dimnames = list(c("(Intercept)", "x1", "Population SD"),
@@ -172,7 +180,7 @@ for(nai in 1:length(naitems)) {
   matFactor[rownames(matFactor) %in% rownames(b[b[,2] == 13,])[1:20],naitems[nai]] <- NA
 }
 
-mmlml <- mml(~mlA + mlB + mlC + mlD + mlE, stuItems=stuItemsFactor, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", weight="origwt", testScale=testDat, composite=FALSE)
+mmlml <- mml(composite~mlA + mlB + mlC + mlD + mlE, stuItems=stuItemsFactor, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", weight="origwt", testScale=testDat, composite=FALSE)
 mmlmlsTaylor <- summary(mmlml, varType="Taylor", strataVar="repgrp1", PSUVar="jkunit", gradientHessian=TRUE)
 mmlmls_coef_REF <- structure(c(284.637143, -5.9554397, -6.52445584, -4.22802448, -10.1810361,  61.2638569, 34.9988724,
                                5.73766411, 5.90805667,  6.12720888,  6.63789466,  8.14112037,  7.30977647, 1.04592348),
@@ -190,7 +198,7 @@ stuItems2 <- mat1[,1:13]
 stuItems2$oppID <- factor(rownames(mat1), levels=rownames(mat1))
 stuItems2 <- reshape(data=stuItems2, varying=c(dichotParamTab$ItemID), idvar=c("oppID"), direction="long", v.names="score", times=dichotParamTab$ItemID, timevar="key")
 
-mml1B <- mml(stuItems=stuItems2, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+mml1B <- mml(composite ~ 1, stuItems=stuItems2, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
 mml1Bs <- summary(mml1B, gradientHessian=TRUE)
 
 # AM results with NA
@@ -225,7 +233,7 @@ stuItems8 <- mat8[,1:13]
 stuItems8$oppID <- factor(rownames(mat8), levels=rownames(mat8))
 stuItems8 <- reshape(data=stuItems8, varying=c(dichotParamTab$ItemID), idvar=c("oppID"), direction="long", v.names="score", times=dichotParamTab$ItemID, timevar="key")
 # it seems AM uses a missing value of c, so use that, note: weighted
-mml1A <- mml(stuItems=stuItems8, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", weightVar="origwt", testScale=testDat, composite=FALSE)
+mml1A <- mml(composite~1, stuItems=stuItems8, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", weightVar="origwt", testScale=testDat, composite=FALSE)
 mml1As <- summary(mml1A, varType="Taylor", strataVar="repgrp1", PSUVar="jkunit", gradientHessian=TRUE)
 mml1AsT_coef_REF <- structure(c(276.603996367644, 33.27212524293007,
                                 0.9749103126644552, 0.9559105270104056),
@@ -246,7 +254,7 @@ stuItems3 <- reshape(data=stuItems3, varying=c(dichotParamTab$ItemID), idvar=c("
 rownames(mat) <- paste0("pseudo-student",1:nrow(mat))
 stuDat3 <- rbind(stuDat, stuDat[1:1000,])
 stuDat3$oppID <- rownames(mat2)
-mml1C <- mml(stuItems=stuItems3, stuDat=stuDat3, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+mml1C <- mml(composite ~ 1, stuItems=stuItems3, stuDat=stuDat3, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
 
 # test fit
 expect_equal(coef(mml1), coef(mml1C), tolerance=sqrt(.Machine$double.eps)*20)
@@ -262,7 +270,8 @@ expect_equal(mml1CCluster$coefficients, mml1Cluster$coefficients, tolerance=sqrt
 
 context("missing data rows, with regressor")
 
-mml2C <- mml(~x1,stuItems=stuItems3, stuDat=stuDat3, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+mml2C <- mml(composite~x1,stuItems=stuItems3, stuDat=stuDat3, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+
 # test fit
 expect_equal(coef(mml2), coef(mml2C), tolerance=sqrt(.Machine$double.eps)*20)
 # test standard errors
@@ -287,7 +296,23 @@ stuDat3$oppID <-  as.numeric(gsub("[a-zA-Z]|[-]","", as.character(stuDat3$oppID)
 stuDat3 <- jumble(stuDat3)
 dichotParamTab <- jumble(dichotParamTab)
 testDat <- jumble(testDat)
-mml2Cjumble <- mml(~x1,stuItems=stuItems3, stuDat=stuDat3, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+mml2Cjumble <- mml(composite~x1,stuItems=stuItems3, stuDat=stuDat3, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+mml2Cjumble$scale <- testDat$scale[2]
+mml2Cjumble$location <- testDat$location[2]
 
 expect_equal(coef(mml2C), coef(mml2Cjumble), tolerance=sqrt(.Machine$double.eps)*20)
 
+
+context("Draw PVs")
+
+stuDatA <- (stuDat[order(as.character(stuDat$oppID)),])[1:1800,]
+stuItemsA <- subset(stuItems, oppID %in% stuDatA$oppID)
+mmlz <- mml(num ~ x1, stuItems=stuItemsA, stuDat=stuDatA, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, composite=FALSE)
+set.seed(3)
+pv1 <- drawPVs.mmlMeans(mmlz, npv=1L, stochasticBeta=FALSE, newStuDat=NULL, newStuItems=NULL)
+set.seed(3)
+pv2 <- drawPVs.mmlMeans(mmlz, npv=1L, stochasticBeta=FALSE, newStuDat=stuDat, newStuItems=stuItemsA)
+# PVs (for first PV, when new data comes alphabetically at the end) are the same if new data is used or not
+expect_equal(pv1[1:1800,2], pv2[1:1800,2])
+expect_true(is.numeric(pv2[1801:2000, 2]))
+expect_true(!any(is.na(pv2[1801:2000, 2])))

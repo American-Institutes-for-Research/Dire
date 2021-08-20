@@ -18,7 +18,7 @@ NumericVector cumsum1(NumericVector x){
 }
 
 // [[Rcpp::export]]
-double GPCM(NumericVector d, double a, double theta, double score, double D) {
+double GPCMC(NumericVector d, double a, double theta, double score, double D) {
   // catch cases 
   int size = d.size(); 
   // score is NA 
@@ -56,7 +56,7 @@ NumericVector polyLvls(List d, NumericVector a, double theta, NumericVector scor
   // for every polytimous item
   for(int i = 0; i < size; i++){
     // apply gpcm
-    lvls[i] = GPCM(d[i], a[i], theta, score[i], D[i]);
+    lvls[i] = GPCMC(d[i], a[i], theta, score[i], D[i]);
   }
   return lvls; 
 }

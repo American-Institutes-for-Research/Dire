@@ -154,13 +154,13 @@ mmlN <- mml(num ~ 1, stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotPara
 # Eric Buehler updated results on 10/15/2020
 mmlNTaylor <- summary(mmlN, varType="Taylor")
 repw <- colnames(stuDat)[grep("srwt", colnames(stuDat))]
-mmlNRep <- summary(mmlN, varType = "replicate", repWeight = repw)
+#mmlNRep <- summary(mmlN, varType = "replicate", repWeight = repw)
 expect_equal(unname(mmlNTaylor$coef[,1]), c(285.351403043, 32.354933129), tolerance=25*sqrt(.Machine$double.eps))
 expect_equal(unname(mmlNTaylor$coef[1,2]), c(1.244369241), tolerance=0.004)
 expect_equal(mmlN$LogLik, -10299.1, tol=1e-5)
 
-expect_equal(mmlNTaylor$coef[,1], mmlNRep$coef[,1], tolerance=25*sqrt(.Machine$double.eps))
-expect_equal(mmlNTaylor$coef[,2], mmlNRep$coef[,2], tolerance=0.002)
+#expect_equal(mmlNTaylor$coef[,1], mmlNRep$coef[,1], tolerance=25*sqrt(.Machine$double.eps))
+#expect_equal(mmlNTaylor$coef[,2], mmlNRep$coef[,2], tolerance=0.002)
 
 
 if(FALSE){
@@ -187,7 +187,7 @@ if(FALSE){
               minNode = -5, maxNode = 5, bobyqaControl=list(maxfun=1e5),
               strataVar="repgrp1", PSUVar="jkunit", fast=TRUE)
 }
-mmlCRep <- summary(mmlC, varType = "replicate", repWeight = repw)
+#mmlCRep <- summary(mmlC, varType = "replicate", repWeight = repw)
 # check that composite coefficients really are composite
 # only [1] because the SD is not formed in this way
 expect_equal(0.3* coef(mmlN)[1] + 0.7*coef(mmlA)[1], coef(mmlC)[1])
@@ -214,9 +214,9 @@ expect_equal(mmlCTaylor$coef[1,2], c(1.098169521),
              tolerance=20*(.Machine$double.eps)^0.25)
 
 # Replicate variance, regression only 
-expect_equal(mmlCRep$coef[1, 2], c(0.978889737365143), 
-             tolerance=200*sqrt(.Machine$double.eps))
+#expect_equal(mmlCRep$coef[1, 2], c(0.978889737365143), 
+#             tolerance=200*sqrt(.Machine$double.eps))
 
-expect_equal(mmlCTaylor$coef[,1], mmlCRep$coef[,1], tolerance=25*sqrt(.Machine$double.eps))
+#expect_equal(mmlCTaylor$coef[,1], mmlCRep$coef[,1], tolerance=25*sqrt(.Machine$double.eps))
 # this is much less precise
-expect_equal(mmlCTaylor$coef[1,2], mmlCRep$coef[1,2], tolerance=0.15)
+#expect_equal(mmlCTaylor$coef[1,2], mmlCRep$coef[1,2], tolerance=0.15)

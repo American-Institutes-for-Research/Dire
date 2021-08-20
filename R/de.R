@@ -206,7 +206,28 @@ mml <- function(formula,
                 composite = TRUE,
                 strataVar = NULL,
                 PSUVar = NULL,
-                fast = TRUE) { # missing code from NAEP
+                fast = TRUE,
+                calcCor = TRUE) { # missing code from NAEP
+  # check for parrallel if multiCore True 
+  if(multiCore == TRUE){
+    # check parallel
+    tryCatch({
+      expr = require(parallel)
+    }, 
+    warning = function(cond){
+      multiCore <<- FALSE 
+      message("Unable to load package parallel, setting multiCore to FALSE. Install parallel to use multiCore option.")
+      
+    })
+    # check doParallel 
+    tryCatch({
+      expr = require(doParallel)
+    }, 
+    warning = function(cond){
+      multiCore <<- FALSE
+      message("Unable to load package doParallel, setting multiCore to FALSE. Install doParallel to use multiCore option.")
+    })
+  }
   call <- match.call()
   polyModel <- match.arg(polyModel)
   polyModel <- tolower(polyModel)
@@ -300,9 +321,11 @@ mml <- function(formula,
   if(!composite) {
     testScale <- testScale2
   }
-
   # break down to subtests and optimize those
   if(composite) {
+    # now form X
+    trms <- delete.response(terms(formula))
+    mFull <- model.frame(trms, stuDat, na.action=na.omit)
     subtests <- sort(unique(paramTab$subtest))
     testScale <- testScale[order(testScale$subtest), ]
     testScale <- testScale[testScale$subtest %in% subtests, ]
@@ -311,6 +334,8 @@ mml <- function(formula,
     rr1l <- list()
     stuDatl <- list()
     Xl <- list()
+    contrastsl <- list()
+    xlevelsl <- list()
     iter <- c()
     obs <- c()
     wobs <- c()
@@ -318,6 +343,7 @@ mml <- function(formula,
     subt <- c()
     resl <- list()
     s <- c()
+    posteriorEsts<- data.frame()
     for(sti in 1:length(subtests)) {
       subt <- c(subt, subtests[sti])
       termLabels <- attr(terms(formula), "term.labels")
@@ -335,6 +361,13 @@ mml <- function(formula,
       # this subtest will not itself be a composite
       calli$composite <- FALSE
       resi <- eval(calli)
+      nidv <- colnames(resi$posteriorEsts) != "id" # non id variable names
+      colnames(resi$posteriorEsts)[nidv] <-  make.names(paste0(colnames(resi$posteriorEsts)[nidv], "_", subtests[sti]))
+      if(sti == 1) {
+        posteriorEsts <- resi$posteriorEsts
+      } else {
+        posteriorEsts <- merge(posteriorEsts, resi$posteriorEsts, by="id", all=TRUE)
+      }
       # the call is stored very inefficiently and is removed
       calliName <- call
       calliName$composite <- FALSE
@@ -359,6 +392,8 @@ mml <- function(formula,
       Convergence <- c(Convergence, resi$Convergence)
       rr1l <- c(rr1l, list(resi$rr1))
       Xl <- c(Xl, list(resi$X))
+      contrastsl <- c(contrastsl, list(resi$contrasts))
+      xlevelsl <- c(xlevelsl, list(resi$xlevels))
       iter <- c(iter, resi$iterations)
       obs <- c(obs, resi$obs)
       wobs <- c(wobs, resi$weightedObs)
@@ -366,133 +401,163 @@ mml <- function(formula,
       # nodes are the same for every run
       nodes <- resi$nodes
     }
-    vc <- matrix(0, nrow=length(subtests), ncol=length(subtests))
-    diag(vc) <- s^2
     if(is.null(weightVar)) {
       stuDat$one <- 1
+      stuDatl <- lapply(stuDatl, function(x) {
+        x$one <- 1
+        return(x)
+      })
       weightVar <- "one"
     }
-    wgt <- stuDat[ , c(idVar, weightVar)]
-    colnames(wgt)[2] <- "w"
-    if(multiCore) {
-      corm <- data.frame(i= rep(1:length(subtests), each=length(subtests)),
-                        j= rep(1:length(subtests), length(subtests)))
-      corm <- corm[corm$i > corm$j, ]
-      corms <- split(corm, 1:nrow(corm))
-      itc <- iter(corms)
-      cori <- foreach(dopari = itc, .packages="Dire", .export = c("optimize")) %dopar% {
-        i <- dopari$i
-        j <- dopari$j
-        xbi <- Xb[,paste0("Xb",i)]
-        xbj <- Xb[,paste0("Xb",j)]
-        # just cases in both
-        ijss <- !is.na(xbi) & !is.na(xbj)
-        xbi <- xbi[ijss]
-        xbj <- xbj[ijss]
-        # subset rr1 
-        rr1i <- rr1l[[i]]
-        rr1j <- rr1l[[j]]
-        rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
-        rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
-        if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
-          stop("rr1i names do not agree with Xb names.")
+    if(TRUE) {
+      vc <- matrix(0, nrow=length(subtests), ncol=length(subtests))
+      diag(vc) <- s^2
+      wgt <- stuDat[ , c(idVar, weightVar)]
+      colnames(wgt)[2] <- "w"
+      # vcfmat is the correlation functions, just the portion above the diagonal.
+      # use a list because we're storing functions
+      vcfmat <- lapply(1:length(subtests), function(n) { vector(mode="list", length=n-1) } )
+      if(multiCore) {
+        corm <- data.frame(i= rep(1:length(subtests), each=length(subtests)),
+                           j= rep(1:length(subtests), length(subtests)))
+        corm <- corm[corm$i > corm$j, ]
+        corms <- split(corm, 1:nrow(corm))
+        itc <- iter(corms)
+        cori <- foreach(dopari = itc, .packages="Dire", .export = c("optimize")) %dopar% {
+          i <- dopari$i
+          j <- dopari$j
+          xbi <- Xb[,paste0("Xb",i)]
+          xbj <- Xb[,paste0("Xb",j)]
+          # just cases in both
+          ijss <- !is.na(xbi) & !is.na(xbj)
+          xbi <- xbi[ijss]
+          xbj <- xbj[ijss]
+          # subset rr1 
+          rr1i <- rr1l[[i]]
+          rr1j <- rr1l[[j]]
+          rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
+          rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
+          if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
+            stop("rr1i names do not agree with Xb names.")
+          }
+          if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
+            stop("rr1j names do not agree with Xb names.")
+          }
+          w <- wgt[wgt[,idVar] %in% Xb$id[ijss],]
+          if( all.equal(w[,idVar], Xb$id[ijss])[1] != TRUE) {
+            stop("weigth names do not agree with Xb names.")
+          }
+          vcij <- mmlCor(Xb1=xbi,
+                         Xb2=xbj,
+                         s1=s[i],
+                         s2=s[j],
+                         rr1=rr1i,
+                         rr2=rr1j,
+                         weights=w$w,
+                         nodes=resi$nodes,
+                         fast=fast)
+          return(list(i=i,j=j,vc=vcij))
         }
-        if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
-          stop("rr1j names do not agree with Xb names.")
+        # make a long data frame with columns i, j, and cor
+        vclong <- as.data.frame(do.call(rbind,lapply(cori, function(x) { unlist(c(x$i, x$j, x$vc$rho)) } )))
+        colnames(vclong) <- c("i", "j", "cor")
+        for(i in 1:length(subtests)) {
+          for(j in 1:length(subtests)) {
+            if(i > j) {
+              vc[i,j] <- vclong[vclong$i == i & vclong$j == j, "cor"] 
+              vc[j,i] <- vc[i,j]
+              foundSub <- FALSE
+              indi <- 1
+              while(!foundSub) {
+                corii <- cori[[indi]]
+                if(corii$i == i & corii$j == j) {
+                  foundSub <- TRUE
+                } 
+                indi <- indi + 1
+              }
+              vcfmat[[i]][[j]] <- corii$vc$corLnl
+            }
+          }
         }
-        w <- wgt[wgt[,idVar] %in% Xb$id[ijss],]
-        if( all.equal(w[,idVar], Xb$id[ijss])[1] != TRUE) {
-          stop("weigth names do not agree with Xb names.")
-        }
-        vcij <- mmlCor(Xb1=xbi,
-                       Xb2=xbj,
-                       s1=s[i],
-                       s2=s[j],
-                       rr1=rr1i,
-                       rr2=rr1j,
-                       weights=w$w,
-                       nodes=resi$nodes)
-        return(list(i=i,j=j,vc=vcij))
-      }
-      # make a long data frame with columns i, j, and cor
-      vclong <- as.data.frame(do.call(rbind,lapply(cori, unlist)))
-      colnames(vclong)[3] <- "cor"
-      for(i in 1:length(subtests)) {
-        for(j in 1:length(subtests)) {
-          if(i > j) {
-            vc[i,j] <- vclong[vclong$i == i & vclong$j == j, "cor"] 
-            vc[j,i] <- vc[i,j]
+      } else {
+        for(i in 1:length(subtests)) {
+          for(j in 1:length(subtests)) {
+            if(i > j) {
+              # subset Xb
+              xbi <- Xb[,paste0("Xb",i)]
+              xbj <- Xb[,paste0("Xb",j)]
+              # just cases in both
+              ijss <- !is.na(xbi) & !is.na(xbj)
+              xbi <- xbi[ijss]
+              xbj <- xbj[ijss]
+              # subset rr1 
+              rr1i <- rr1l[[i]]
+              rr1j <- rr1l[[j]]
+              rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
+              rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
+              if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
+                stop("rr1i names do not agree with Xb names.")
+              }
+              if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
+                stop("rr1j names do not agree with Xb names.")
+              }
+              w <- wgt[wgt[ , idVar] %in% Xb$id[ijss],]
+              if( all.equal(w[ , idVar], Xb$id[ijss])[1] != TRUE) {
+                stop("weigth names do not agree with Xb names.")
+              }
+              vcf <- mmlCor(Xb1=xbi,
+                            Xb2=xbj,
+                            s1=s[i],
+                            s2=s[j],
+                            rr1=rr1i,
+                            rr2=rr1j,
+                            weights=w$w,
+                            nodes=resi$nodes,
+                            fast=fast)
+              vc[j, i] <- vc[i, j] <- vcf$rho
+              vcfmat[[i]][[j]] <- vcf$corLnl
+            }
           }
         }
       }
-
-    } else {
-      for(i in 1:length(subtests)) {
-        for(j in 1:length(subtests)) {
-          if(i > j) {
-            # subset Xb
-            xbi <- Xb[,paste0("Xb",i)]
-            xbj <- Xb[,paste0("Xb",j)]
-            # just cases in both
-            ijss <- !is.na(xbi) & !is.na(xbj)
-            xbi <- xbi[ijss]
-            xbj <- xbj[ijss]
-            # subset rr1 
-            rr1i <- rr1l[[i]]
-            rr1j <- rr1l[[j]]
-            rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
-            rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
-            if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
-              stop("rr1i names do not agree with Xb names.")
-            }
-            if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
-              stop("rr1j names do not agree with Xb names.")
-            }
-            w <- wgt[wgt[,idVar] %in% Xb$id[ijss],]
-            if( all.equal(w[,idVar], Xb$id[ijss])[1] != TRUE) {
-              stop("weigth names do not agree with Xb names.")
-            }
-            vc[i,j] <- mmlCor(Xb1=xbi,
-                              Xb2=xbj,
-                              s1=s[i],
-                              s2=s[j],
-                              rr1=rr1i,
-                              rr2=rr1j,
-                              weights=w$w,
-                              nodes=resi$nodes)
-            vc[j,i] <- vc[i,j]
-          }
-        }
-      }
+      colnames(vc) <- rownames(vc) <- subtests
     }
     # add names to everything
-    colnames(vc) <- rownames(vc) <- subtests
     names(stuDatl) <- names(lnlfl) <- names(rr1l) <- names(Xl) <- names(resl) <- subtests
     names(iter) <- names(obs) <- names(wobs) <- subtests
     coefM <- matrix(coef, nrow=length(subtests), byrow=TRUE)
     rownames(coefM) <- subtests
     colnames(coefM) <- names(coef)[1:ncol(coefM)]
-    res <- structure(list("call" = call,
-                          "coefficients" = coefM,
-                          "X" = Xl,
-                          "rr1" = rr1l,
-                          "ids" = stuDat[[idVar]],
-                          'Convergence' = Convergence,
-                          "lnlfl" = lnlfl,
-                          "stuDat" = stuDatl,
-                          "weightVar" = weightVar,
-                          "nodes" = resi$nodes,
+    res <- structure(list(call = call,
+                          coefficients = coefM,
+                          X = Xl,
+                          contrasts = contrastsl,
+                          xlevels = xlevelsl,
+                          rr1 = rr1l,
+                          ids = stuDat[[idVar]],
+                          Convergence = Convergence,
+                          lnlfl = lnlfl,
+                          stuDat = stuDatl,
+                          stuItems = stuItems,
+                          weightVar = weightVar,
+                          nodes = resi$nodes,
                           iterations = iter,
-                          "obs" = obs,
-                          "testScale" = testScale,
-                          "weightedObs" = wobs,
-                          "SubscaleVC" = vc,
+                          obs = obs,
+                          testScale = testScale,
+                          weightedObs = wobs,
                           idVar = idVar,
                           resl = resl,
                           strataVar = strataVar,
-                          PSUVar = PSUVar),
+                          PSUVar = PSUVar,
+                          modelFrameFull = mFull,
+                          posteriorEsts = posteriorEsts,
+                          formula = formula),
                      class = "mmlCompositeMeans")
-     return(res)
+    if(calcCor) {
+      res$SubscaleVC <- vc
+      res$vcfmat <- vcfmat
+    }
+    return(res)
   } # end if(composite) {
 
   # done with the left hand side of the formula, if it exists, drop it
@@ -529,7 +594,12 @@ mml <- function(formula,
   stuDat <- stuDat[stuDat[[idVar]] %in% names(stu),]
 
   # now form X
-  X <- model.matrix(formula, stuDat)
+  trms <- delete.response(terms(formula))
+  m <- model.frame(trms, data=stuDat)
+  X <- model.matrix(formula, m)
+  #for prediction
+  contrasts <- attributes(X)$contrasts
+  xlevels <- .getXlevels(trms, m)
   rownames(X) <- stuDat[[idVar]]
   K <- ncol(X) # number of fixed parameters to estimate   
   nms <- c(colnames(X), 'Population SD') 
@@ -555,17 +625,49 @@ mml <- function(formula,
   if(!all.equal(colnames(rr1), stuDat[[idVar]])) {
     stop("Sorting error in mml.")
   }
-  #colnames(rr1) <- stuDat[[idVar]]
   fn2 <- fn.regression(X_=X, i=NULL, wv=weightVar, rr1=rr1, nodes=nodes, stuDat=stuDat)
-  opt <- bobyqa(startVal, fn2, control=bobyqaControl)
+  fn2g <- function(par) {
+    fn2(par, gr=TRUE)
+  }
+  opt <- optim(startVal, fn=fn2, gr=fn2g, method="BFGS", control=list(maxit=1e5, reltol=1e-6))
+  fn2h <- function(par) {
+    fn2(par, hess=TRUE)
+  }
+  Newton <- function(par0, iter0) {
+    opt <- list(par=par0, iter=iter0, convergence=0)
+    gr <- 1
+    while(max(gr) > 1e-5) {
+      gr <- fn2g(opt$par)
+      H <- fn2h(opt$par)
+      update <- qr.solve(qr(H), -1*gr)
+      opt$par <- opt$par + update
+      opt$iter <- opt$iter + 1
+      gr <- gr / pmax(1, opt$par)
+    }
+    opt$par <- as.vector(opt$par)
+    opt$value <- fn2(opt$par)
+    return(opt)
+  }
+  # push to actual convergence
+  opt <- Newton(opt$par, unname(opt$counts["gradient"])) # number of BFGS steps
+  # make sure the root var is the positive root (the SD)
   opt$par[length(opt$par)] <- abs(opt$par[length(opt$par)])
-  iter <- opt$feval
-  convergence <- opt$msg
+  iter <- opt$iter
+  if(opt$convergence==0) {
+    convergence <- "converged"
+  } else {
+    if(opt$convergence==1) {
+      convergence <- "Iteration limit reached"
+    } else {
+      convergence <- "Did not converge"
+    }
+  }
+  posteriorEsts <- fn2(opt$par, returnPosterior=TRUE)
   names(opt$par) <- c(colnames(X), "s")
   # default location and scale
-  location <- 0
-  scale <- 1
-  if(!is.null(testScale)) {
+  location <- NA
+  scale <- NA
+  if(!is.null(testScale) & nrow(testScale) == 1) {
     location <- testScale$location[1]
     scale <- testScale$scale[1]
   }
@@ -578,23 +680,45 @@ mml <- function(formula,
   }
   coefficients <- opt$par
   names(coefficients) <-nms
-  structure(list("call" = call,
-                 "coefficients" = coefficients,
-                 "LogLik" = -1/2*opt$fval,
-                 "X" = X,
-                 'Convergence' = convergence,
-                 "location" = location,
-                 "scale" = scale,
-                 "lnlf"= fn2,
-                 "rr1"= rr1,
-                 "stuDat" = stuDat,
-                 "weightVar" = weightVar,
-                 "nodes" = nodes,
+  # report on theta scale if no scale found
+  if(is.na(scale) & is.na(location)) {
+    scale <- 1
+    location <- 0
+  }
+  if(is.na(scale) | is.na(location)) {
+    if(is.na(scale)) {
+      warning(paste0("Could not find a valid scale. Resetting to theta scale. Check ", dQuote("testDat"), " argument."))
+    } else {
+      warning(paste0("Could not find a valid location. Resetting to theta scale. Check ", dQuote("testDat"), " argument."))
+    }
+    scale <- 1
+    location <- 0
+  }
+  structure(list(call = call,
+                 coefficients = coefficients,
+                 LogLik = -1/2*opt$value,
+                 X = X,
+                 Convergence = convergence,
+                 location = location,
+                 scale = scale,
+                 lnlf= fn2,
+                 rr1= rr1,
+                 stuDat = stuDat,
+                 weightVar = weightVar,
+                 nodes = nodes,
                  iterations = iter,
-                 "obs" = obs,
-                 "weightedObs" = weightedObs,
+                 obs = obs,
+                 weightedObs = weightedObs,
                  strataVar = strataVar,
-                 PSUVar = PSUVar),
+                 PSUVar = PSUVar,
+                 formula = formula,
+                 contrasts = contrasts,
+                 xlevels = xlevels,
+                 polyModel = polyModel,
+                 paramTab = paramTab,
+                 fast = fast,
+                 idVar = idVar,
+                 posteriorEsts = posteriorEsts),
             class = "mmlMeans")
 }
 
@@ -606,17 +730,17 @@ mmlCor <- function(Xb1,
                    rr1,
                    rr2,
                    nodes,
-                   weights=NULL) { 
+                   weights=NULL,
+                   fast=TRUE) { 
   # fn2 uses the Fisher-Z transformation
   # fine rebins rr1 for large correlations where numerical integration becomes difficult
-  fn2f <- fnCor(Xb1=Xb1, Xb2=Xb2, s1=s1, s2=s2, w=weights, rr1=rr1, rr2=rr2, nodes=nodes, fine=TRUE, fast = TRUE)
+  fn2f <- fnCor(Xb1=Xb1, Xb2=Xb2, s1=s1, s2=s2, w=weights, rr1=rr1, rr2=rr2, nodes=nodes, fine=TRUE, fast = fast)
   ## optimize in Fisher-Z space
   # assumes no local minima
   # -5/5 are close enough to cor=-1/1 to use
   opt <- optimize(fn2f, c(-5, 5))
-  
   # transform back to original space and return result
-  return(tanh(opt$minimum) * s1 * s2)
+  return(list(rho=tanh(opt$minimum) * s1 * s2, corLnl=fn2f))
 }
 
 # unused

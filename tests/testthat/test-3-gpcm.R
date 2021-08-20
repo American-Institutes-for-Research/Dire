@@ -133,8 +133,8 @@ stuDat$origwt <- mat$origwt <- runif(nrow(stuDat)) * 4 * abs(stuDat$x1 + 3)
 mml1 <- mml(stuItems=split(stuItems, stuItems$oppID), stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab, Q=34, idVar="oppID", multiCore=FALSE, testScale=testDat)
 mml1Taylor <- summary(mml1, varType="Taylor", strataVar="repgrp1", PSUVar="jkunit", gradientHessian=TRUE)
 
-expect_equal(coef(mml1Taylor)[,1], c(`(Intercept)` =  281.432554746317, `Population SD` = 36.387298620653), tolerance=20*sqrt(.Machine$double.eps))
-     
+expect_equal(coef(mml1Taylor)[,1], c(`(Intercept)` =  281.432554746317, `Population SD` = 36.387298620653), tolerance=2000*sqrt(.Machine$double.eps))
+
 expect_equal(coef(mml1Taylor)[,2], c(`(Intercept)` = 0.962322764662336, `Population SD` = 0.85340608987368), tolerance=5*(.Machine$double.eps)^0.25)
 mml1mc <- mml(stuItems=split(stuItems, stuItems$oppID), stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab, Q=34, idVar="oppID", multiCore=TRUE, testScale=testDat)
 mml1mcTaylor <- summary(mml1mc, varType="Taylor", strataVar="repgrp1", PSUVar="jkunit", gradientHessian=TRUE)

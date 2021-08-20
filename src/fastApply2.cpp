@@ -4,7 +4,7 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export]]
-NumericVector ldbinom2(NumericVector x, NumericVector pr){
+NumericVector ldbinomC(NumericVector x, NumericVector pr){
   // declare container 
   NumericVector binom; 
   // apply ldbinom 
@@ -24,8 +24,10 @@ NumericVector multItems(NumericVector x1, NumericVector guess, NumericVector D,
   // loop through nodes
   for(int i = 0; i < Q; i++){
     // sum ldbinom and append to return container 
-    nodesNew[i] = sum(ldbinom2(x1, guess + ((1 - guess) / (1 + exp(-D * slope * (nodes[i] - difficulty)))))); 
+    nodesNew[i] = sum(ldbinomC(x1, guess + ((1 - guess) / (1 + exp(-D * slope * (nodes[i] - difficulty)))))); 
   }
   // return 
   return nodesNew; 
 }
+
+

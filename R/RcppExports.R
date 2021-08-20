@@ -5,8 +5,8 @@ cumsum1 <- function(x) {
     .Call(`_Dire_cumsum1`, x)
 }
 
-GPCM <- function(d, a, theta, score, D) {
-    .Call(`_Dire_GPCM`, d, a, theta, score, D)
+GPCMC <- function(d, a, theta, score, D) {
+    .Call(`_Dire_GPCMC`, d, a, theta, score, D)
 }
 
 polyLvls <- function(d, a, theta, score, D) {
@@ -17,8 +17,8 @@ ansItems <- function(d, a, theta, score, D) {
     .Call(`_Dire_ansItems`, d, a, theta, score, D)
 }
 
-ldbinom2 <- function(x, pr) {
-    .Call(`_Dire_ldbinom2`, x, pr)
+ldbinomC <- function(x, pr) {
+    .Call(`_Dire_ldbinomC`, x, pr)
 }
 
 multItems <- function(x1, guess, D, slope, nodes, difficulty) {

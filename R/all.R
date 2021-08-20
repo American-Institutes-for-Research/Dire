@@ -1,0 +1,2 @@
+setOldClass("mmlCompositeMeans")
+setOldClass("mmlMeans")
