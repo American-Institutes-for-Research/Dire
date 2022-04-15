@@ -11,8 +11,8 @@
 #'                 a \code{data.frame}; see Details for the format
 #' @param stuDat   a \code{data.frame} with a single row per student. Predictors in
 #'                 the \code{formula} must be in \code{stuDat}.
-#' @param dichotParamTab a \code{data.frame} of dichotimous item information, see Details
-#' @param polyParamTab a \code{data.frame} of polytimous item information, see Details
+#' @param dichotParamTab a \code{data.frame} of dichotomous item information, see Details
+#' @param polyParamTab a \code{data.frame} of polytomous item information, see Details
 #' @param testScale a \code{data.frame} of scaling information, see Details
 #' @param Q        an integer; the number of integration points
 #' @param minNode a numeric; the smallest integration point for the latent variable
@@ -26,7 +26,7 @@
 #' @param multiCore allows the \code{foreach} package to be used. You should
 #'                  have already setup the 
 #' \ifelse{latex}{the \code{registerDoParallel} function in the \code{doParallel} package}{\code{\link[doParallel]{registerDoParallel}}}.
-#' @param bobyqaControl a list that gets passed to \ifelse{latex}{the \code{bobyqa} optimizer in \code{minqa}}{\code{\link[minqa]{bobyqa}}}
+#' @param bobyqaControl deprecated. A list that gets passed to \ifelse{latex}{the \code{bobyqa} optimizer in \code{minqa}}{\code{\link[minqa]{bobyqa}}}
 #' @param composite a logical indicating if an overall test should be treated as
 #'                  a composite score; a composite is a weighted average of the
 #'                  subscales in it.
@@ -37,7 +37,9 @@
 #'               do not need to be unique across strata.
 #' @param fast a logical indicating if cpp code should be used in \code{mml} processes. This should 
 #'             yield speed-ups to runs. 
-#'
+#' @param calcCor set to \code{TRUE} to calculate covariances. Needed to estimate variances and form plausible values
+#' @param verbose integer, negative or zero for no details, increasingly verbose messages at one and two
+#' 
 #' @details
 #' 
 #' The \code{mml} function models a latent outcome conditioning on
@@ -47,12 +49,12 @@
 #' Student item response data go into \code{stuItems}; whereas student
 #' covariates, weights, and sampling information go into \code{stuDat}.
 #' The \code{dichotParamTab} and \code{polyParamTab}
-#' contains item parameter information for dichotimous and polytimous items,
+#' contain item parameter information for dichotomous and polytomous items,
 #' respectively---the item parameter data is the result of an existing
 #' item parameter scaling. In the case of 
 #' the National Assessment of Educational Progress (NAEP),
 #' they can be found online, for example, at
-#' \href{https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_irt.aspx}{https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_irt.aspx}.
+#' \href{https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_irt.aspx}{NAEP technical documentation}.
 #' Finally, information about scaling and subscale weights for composites are put in \code{testScale}.
 #' 
 #' The model for dichotomous responses data is, by default, three Parameter Logit
@@ -69,7 +71,7 @@
 #' \dQuote{g} parameters, respectively; see the vignette for details of
 #' the 3PL model. Users can also use the column names directly from the
 #' vignette notation (\dQuote{a}, \dQuote{d}, and \dQuote{g}) if they prefer.
-#' Items that are missing (\code{NA}) are not used in the likelihood function 
+#' Items that are missing (\code{NA}) are not used in the likelihood function. 
 #' Users wishing to apply a special behavior for a subset of items can use
 #' set those items to an invalid score and put that in the \code{dichotParamTab}
 #' column \code{missingCode}. They are then scored as if they are \code{missingValue}
@@ -80,12 +82,12 @@
 #' \code{key} from \code{stuItems}, as well as \code{slope}
 #' (which can also be called \code{a}) that corresponds to the \code{a}
 #' parameter in the vignette.
-#' Users must also specify the location of the cut points (d-sub-cj in the vignette)
+#' Users must also specify the location of the cut points (\eqn{d_{cj}} in the vignette)
 #' which are named \code{d1}, \code{d2}, ..., up to \code{dn} where \code{n} is
 #' one less than the number of score points. Some people prefer to also apply a 
 #' shift to all of these and this shift is applied when there is a column named
 #' \code{itemLocation} by simply adding that to every \code{d*} column. Items
-#' are not included in the likelihood for an individual when there value on \code{stuItems}
+#' are not included in the likelihood for an individual when their value on \code{stuItems}
 #' is \code{NA}, but no provision is made for guessing, nor special provision for 
 #' missing codes in polytimious items.
 #' 
@@ -120,7 +122,7 @@
 #' The first required column is named
 #' \code{key} and shows the item name as it appears in \code{paramTab};
 #' the second column in named
-#' \code{score} and shows the score for that item. For binomial
+#' \code{score} and shows the score for that item. For dichotomous
 #' items, the \code{score} is 0 or 1. For \code{GPCM} items, the scores
 #' start at zero as well. For \code{GRM}, the scores start at 1.
 #' 
@@ -131,14 +133,14 @@
 #' The quadrature points then are a range from \code{minNode} to \code{maxNode}
 #' with a total of \code{Q} nodes. 
 #' 
-#' @return when called for a single subscale or overall score, returns object of class \code{mmlMeans}. 
+#' @return When called for a single subscale or overall score, returns object of class \code{mmlMeans}. 
 #' This is a list with elements: 
 #' \itemize{
 #' \item{\code{call} the call used to generate this \code{mml.means} object}
 #' \item{\code{coefficients} the unscaled marginal maximum likelihood regression coefficients}
 #' \item{\code{LogLik} the log-likelihood of the fit model}
 #' \item{\code{X} the design matrix of the marginal maximum likelihood regression}
-#' \item{\code{Convergence} a convergence note from the \code{bobyqa} optimizer}
+#' \item{\code{Convergence} a convergence note from the optimizer}
 #' \item{\code{location} used for scaling the estimates}
 #' \item{\code{scale} used for scaling the estimates}
 #' \item{\code{lnlf} the log-likelihood function of the unscaled parameters} 
@@ -150,7 +152,17 @@
 #' \item{\code{obs} the number of observations used}
 #' \item{\code{weightedObs} the weighted N for the observations}
 #' \item{\code{strataVar} the column name of the stratum variable on stuDat; potentially used for variance estimation}
-#' \item{\code{PSUVar} the column name of the stratum variable on stuDat; potentially used for variance estimation}
+#' \item{\code{PSUVar} the column name of the PSU variable on stuDat; potentially used for variance estimation}
+#' \item{\code{itemScorePoints} a data frame that shows item IDs, the number of score points, expected scores (both from the paramTab arguments), as well as the occupied score points}
+#' \item{\code{stuItems} the data frame passed to \code{mml} reformatted for use in mml}
+#' \item{\code{formula} the formula passed to \code{mml}}
+#' \item{\code{contrasts} the contrasts used in forming the design matrix}
+#' \item{\code{xlevels} the levels of the covariates used in forming the design matrix}
+#' \item{\code{polyModel} the value of the argument of the same name passed to \code{mml}}
+#' \item{\code{paramTab} a data frame that condenses \code{dichotParamTab} and \code{polyParamTab}}
+#' \item{\code{fast} the value of the argument of the same name passed to \code{mml}}
+#' \item{\code{idVar} the value of the argument of the same name passed to \code{mml}}
+#' \item{\code{posteriorEsts} the posterior estimates for the people in \code{stuDat} included in the model}
 #' }
 #' 
 #' When a composite score is computed there are several subscales run and the return is a \code{mmlCompositeMeans}. Many elements are themselves list with one element per construct.
@@ -161,7 +173,7 @@
 #' \item{\code{X} the design matrix of the marginal maximum likelihood regression}
 #' \item{\code{rr1} a list of elements, each the rr1 object for a subscale (see \code{mmlMeans} output)}
 #' \item{\code{ids} The ID variable used for each row of \code{stuDat}}
-#' \item{\code{Convergence} a vector of convergence notes from the \code{bobyqa} optimizer}
+#' \item{\code{Convergence} a vector of convergence notes from the optimizer}
 #' \item{\code{lnlfl} a list of log-likelihood functions of the unscaled parameters, by construct}
 #' \item{\code{stuDat} a list of \code{stuDat} data frames, as used when fitting each construct, filtered to just relevant student records}
 #' \item{\code{weightVar} the name of the weight variable on \code{stuDat}}
@@ -174,7 +186,14 @@
 #' \item{\code{idVar} the name of the identifier used on \code{stuDat} and \code{stuItems} data}
 #' \item{\code{resl} list of mmlMeans objects, one per construct}
 #' \item{\code{strataVar} the column name of the stratum variable on \code{stuDat}; potentially used for variance estimation}
-#' \item{\code{PSUVar} the column name of the stratum variable on \code{stuDat}; potentially used for variance estimation}
+#' \item{\code{PSUVar} the column name of the PSU variable on \code{stuDat}; potentially used for variance estimation}
+#' \item{\code{stuItems} the data frame passed to \code{mml} reformatted for use in mml}
+#' \item{\code{formula} the formula passed to \code{mml}}
+#' \item{\code{contrasts} the contrasts used in forming the design matrix}
+#' \item{\code{xlevels} the levels of the covariates used in forming the design matrix}
+#' \item{\code{polyModel} the value of the argument of the same name passed to \code{mml}}
+#' \item{\code{posteriorEsts} the list of posterior estimates for the people in \code{stuDat} included in the model}
+#' \item{\code{SubscaleVC} the matrix of latent correlations across constructs}
 #' }
 #'
 #' \code{LogLik} is not returned because there is no likelihood for a composite model.
@@ -183,8 +202,7 @@
 #' @author Harold Doran, Paul Bailey, Claire Kelley, Sun-joo Lee, and Eric Buehler 
 #' @export
 #' @importFrom methods as 
-#' @importFrom minqa bobyqa 
-#' @importFrom stats as.formula model.matrix coef dbinom sd terms reformulate complete.cases
+#' @importFrom stats as.formula model.matrix coef dbinom sd terms reformulate complete.cases delete.response .getXlevels na.omit
 #' @importFrom utils head
 #' @import Rcpp
 #' @import haven 
@@ -202,31 +220,27 @@ mml <- function(formula,
                 polyModel = c('GPCM', 'GRM'),
                 weightVar = NULL,
                 multiCore = FALSE,
-                bobyqaControl = list(maxfun=1e5),
+                bobyqaControl = NULL,
                 composite = TRUE,
                 strataVar = NULL,
                 PSUVar = NULL,
                 fast = TRUE,
-                calcCor = TRUE) { # missing code from NAEP
+                calcCor = TRUE,
+                verbose=0) {
+  if(!missing(bobyqaControl)) {
+    message("bobyqaControl is deprecated and will be ignored. It was replace with Newton's method.")
+  }
   # check for parrallel if multiCore True 
   if(multiCore == TRUE){
     # check parallel
-    tryCatch({
-      expr = require(parallel)
-    }, 
-    warning = function(cond){
-      multiCore <<- FALSE 
+    if(!requireNamespace("parallel")) {
       message("Unable to load package parallel, setting multiCore to FALSE. Install parallel to use multiCore option.")
-      
-    })
-    # check doParallel 
-    tryCatch({
-      expr = require(doParallel)
-    }, 
-    warning = function(cond){
-      multiCore <<- FALSE
+      multiCore <- FALSE
+    }
+    if(!requireNamespace("doParallel")) {
       message("Unable to load package doParallel, setting multiCore to FALSE. Install doParallel to use multiCore option.")
-    })
+      multiCore <- FALSE
+    }
   }
   call <- match.call()
   polyModel <- match.arg(polyModel)
@@ -360,6 +374,10 @@ mml <- function(formula,
       calli$PSUVar <- PSUVar
       # this subtest will not itself be a composite
       calli$composite <- FALSE
+      if(verbose >= 1) {
+        cat("\n")
+        message(paste0("Estimating construct ", dQuote(subtests[sti])))
+      }
       resi <- eval(calli)
       nidv <- colnames(resi$posteriorEsts) != "id" # non id variable names
       colnames(resi$posteriorEsts)[nidv] <-  make.names(paste0(colnames(resi$posteriorEsts)[nidv], "_", subtests[sti]))
@@ -372,7 +390,7 @@ mml <- function(formula,
       calliName <- call
       calliName$composite <- FALSE
       calliName$formula <- formulai
-      resi$call <- calliName
+      resi[["call"]] <- calliName
       resl <- c(resl, list(resi))
       co <- resi$coefficients
       # remove standard deviation
@@ -409,119 +427,121 @@ mml <- function(formula,
       })
       weightVar <- "one"
     }
-    if(TRUE) {
-      vc <- matrix(0, nrow=length(subtests), ncol=length(subtests))
-      diag(vc) <- s^2
-      wgt <- stuDat[ , c(idVar, weightVar)]
-      colnames(wgt)[2] <- "w"
-      # vcfmat is the correlation functions, just the portion above the diagonal.
-      # use a list because we're storing functions
-      vcfmat <- lapply(1:length(subtests), function(n) { vector(mode="list", length=n-1) } )
-      if(multiCore) {
-        corm <- data.frame(i= rep(1:length(subtests), each=length(subtests)),
-                           j= rep(1:length(subtests), length(subtests)))
-        corm <- corm[corm$i > corm$j, ]
-        corms <- split(corm, 1:nrow(corm))
-        itc <- iter(corms)
-        cori <- foreach(dopari = itc, .packages="Dire", .export = c("optimize")) %dopar% {
-          i <- dopari$i
-          j <- dopari$j
-          xbi <- Xb[,paste0("Xb",i)]
-          xbj <- Xb[,paste0("Xb",j)]
-          # just cases in both
-          ijss <- !is.na(xbi) & !is.na(xbj)
-          xbi <- xbi[ijss]
-          xbj <- xbj[ijss]
-          # subset rr1 
-          rr1i <- rr1l[[i]]
-          rr1j <- rr1l[[j]]
-          rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
-          rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
-          if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
-            stop("rr1i names do not agree with Xb names.")
-          }
-          if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
-            stop("rr1j names do not agree with Xb names.")
-          }
-          w <- wgt[wgt[,idVar] %in% Xb$id[ijss],]
-          if( all.equal(w[,idVar], Xb$id[ijss])[1] != TRUE) {
-            stop("weigth names do not agree with Xb names.")
-          }
-          vcij <- mmlCor(Xb1=xbi,
-                         Xb2=xbj,
-                         s1=s[i],
-                         s2=s[j],
-                         rr1=rr1i,
-                         rr2=rr1j,
-                         weights=w$w,
-                         nodes=resi$nodes,
-                         fast=fast)
-          return(list(i=i,j=j,vc=vcij))
+    vc <- matrix(0, nrow=length(subtests), ncol=length(subtests))
+    diag(vc) <- s^2
+    wgt <- stuDat[ , c(idVar, weightVar)]
+    colnames(wgt)[2] <- "w"
+    # vcfmat is the correlation functions, just the portion above the diagonal.
+    # use a list because we're storing functions
+    if(multiCore) {
+      corm <- data.frame(i= rep(1:length(subtests), each=length(subtests)),
+                         j= rep(1:length(subtests), length(subtests)))
+      corm <- corm[corm$i > corm$j, ]
+      corms <- split(corm, 1:nrow(corm))
+      itc <- iter(corms)
+      if(verbose >= 1) {
+        message("Estimating correlations in parallel.")
+      }
+      cori <- foreach(dopari = itc, .packages="Dire", .export = c("optimize", "calcRrij", "mmlCor", "fnCor")) %dopar% {
+        i <- dopari$i
+        j <- dopari$j
+        xbi <- Xb[ , paste0("Xb",i)]
+        xbj <- Xb[ , paste0("Xb",j)]
+        # just cases in both
+        ijss <- !is.na(xbi) & !is.na(xbj)
+        xbi <- xbi[ijss]
+        xbj <- xbj[ijss]
+        # subset rr1 
+        rr1i <- rr1l[[i]]
+        rr1j <- rr1l[[j]]
+        rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
+        rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
+        if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
+          stop("rr1i names do not agree with Xb names.")
         }
-        # make a long data frame with columns i, j, and cor
-        vclong <- as.data.frame(do.call(rbind,lapply(cori, function(x) { unlist(c(x$i, x$j, x$vc$rho)) } )))
-        colnames(vclong) <- c("i", "j", "cor")
-        for(i in 1:length(subtests)) {
-          for(j in 1:length(subtests)) {
-            if(i > j) {
-              vc[i,j] <- vclong[vclong$i == i & vclong$j == j, "cor"] 
-              vc[j,i] <- vc[i,j]
-              foundSub <- FALSE
-              indi <- 1
-              while(!foundSub) {
-                corii <- cori[[indi]]
-                if(corii$i == i & corii$j == j) {
-                  foundSub <- TRUE
-                } 
-                indi <- indi + 1
-              }
-              vcfmat[[i]][[j]] <- corii$vc$corLnl
-            }
-          }
+        if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
+          stop("rr1j names do not agree with Xb names.")
         }
-      } else {
-        for(i in 1:length(subtests)) {
-          for(j in 1:length(subtests)) {
-            if(i > j) {
-              # subset Xb
-              xbi <- Xb[,paste0("Xb",i)]
-              xbj <- Xb[,paste0("Xb",j)]
-              # just cases in both
-              ijss <- !is.na(xbi) & !is.na(xbj)
-              xbi <- xbi[ijss]
-              xbj <- xbj[ijss]
-              # subset rr1 
-              rr1i <- rr1l[[i]]
-              rr1j <- rr1l[[j]]
-              rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
-              rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
-              if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
-                stop("rr1i names do not agree with Xb names.")
-              }
-              if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
-                stop("rr1j names do not agree with Xb names.")
-              }
-              w <- wgt[wgt[ , idVar] %in% Xb$id[ijss],]
-              if( all.equal(w[ , idVar], Xb$id[ijss])[1] != TRUE) {
-                stop("weigth names do not agree with Xb names.")
-              }
-              vcf <- mmlCor(Xb1=xbi,
-                            Xb2=xbj,
-                            s1=s[i],
-                            s2=s[j],
-                            rr1=rr1i,
-                            rr2=rr1j,
-                            weights=w$w,
-                            nodes=resi$nodes,
-                            fast=fast)
-              vc[j, i] <- vc[i, j] <- vcf$rho
-              vcfmat[[i]][[j]] <- vcf$corLnl
+        w <- wgt[wgt[,idVar] %in% Xb$id[ijss],]
+        if( all.equal(w[,idVar], Xb$id[ijss])[1] != TRUE) {
+          stop("weigth names do not agree with Xb names.")
+        }
+        vcij <- mmlCor(Xb1=xbi,
+                       Xb2=xbj,
+                       s1=s[i],
+                       s2=s[j],
+                       rr1=rr1i,
+                       rr2=rr1j,
+                       weights=w$w,
+                       nodes=resi$nodes,
+                       fast=fast)
+        return(list(i=i,j=j,vc=vcij))
+      }
+      # make a long data frame with columns i, j, and cor
+      vclong <- as.data.frame(do.call(rbind, lapply(cori, function(x) { unlist(c(x$i, x$j, x$vc$rho)) } )))
+      colnames(vclong) <- c("i", "j", "cor")
+      for(i in 1:length(subtests)) {
+        for(j in 1:length(subtests)) {
+          if(i > j) {
+            vc[i,j] <- vclong[vclong$i == i & vclong$j == j, "cor"] 
+            vc[j,i] <- vc[i,j]
+            foundSub <- FALSE
+            indi <- 1
+            while(!foundSub) {
+              corii <- cori[[indi]]
+              if(corii$i == i & corii$j == j) {
+                foundSub <- TRUE
+              } 
+              indi <- indi + 1
             }
           }
         }
       }
-      colnames(vc) <- rownames(vc) <- subtests
+    } else { # end: if(multiCore)
+      # single cor correlation calculation
+      for(i in 1:length(subtests)) {
+        for(j in 1:length(subtests)) {
+          if(i > j) {
+            # subset Xb
+            xbi <- Xb[,paste0("Xb",i)]
+            xbj <- Xb[,paste0("Xb",j)]
+            # just cases in both
+            ijss <- !is.na(xbi) & !is.na(xbj)
+            xbi <- xbi[ijss]
+            xbj <- xbj[ijss]
+            # subset rr1 
+            rr1i <- rr1l[[i]]
+            rr1j <- rr1l[[j]]
+            rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
+            rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
+            if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
+              stop("rr1i names do not agree with Xb names.")
+            }
+            if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
+              stop("rr1j names do not agree with Xb names.")
+            }
+            w <- wgt[wgt[ , idVar] %in% Xb$id[ijss],]
+            if( all.equal(w[ , idVar], Xb$id[ijss])[1] != TRUE) {
+              stop("weigth names do not agree with Xb names.")
+            }
+            if(verbose >= 1) {
+              message(paste0("Estimating construct correlations between ", subtests[i], " and ", subtests[j]))
+            }
+            vcf <- mmlCor(Xb1=xbi,
+                          Xb2=xbj,
+                          s1=s[i],
+                          s2=s[j],
+                          rr1=rr1i,
+                          rr2=rr1j,
+                          weights=w$w,
+                          nodes=resi$nodes,
+                          fast=fast)
+            vc[j, i] <- vc[i, j] <- vcf$rho
+          }
+        }
+      }
     }
+    colnames(vc) <- rownames(vc) <- subtests
     # add names to everything
     names(stuDatl) <- names(lnlfl) <- names(rr1l) <- names(Xl) <- names(resl) <- subtests
     names(iter) <- names(obs) <- names(wobs) <- subtests
@@ -555,7 +575,6 @@ mml <- function(formula,
                      class = "mmlCompositeMeans")
     if(calcCor) {
       res$SubscaleVC <- vc
-      res$vcfmat <- vcfmat
     }
     return(res)
   } # end if(composite) {
@@ -566,7 +585,7 @@ mml <- function(formula,
   }
   # subset stuDat to valid data
   cc <- complete.cases(stuDat[,c(all.vars(formula), weightVar, strataVar, PSUVar)])
-  stuDat <- stuDat[cc,]
+  stuDat <- stuDat[cc, ]
   stuItems <- stuItems[stuItems[[idVar]] %in% stuDat[[idVar]],]
   if(nrow(stuDat) == 0) {
     stop(paste0("no complete cases in ", dQuote("stuDat"), "."))
@@ -586,16 +605,50 @@ mml <- function(formula,
   stuItems <- stuItems[!is.na(stuItems$score),]
   # only keep items in the paramTab
   stuItems <- stuItems[stuItems$key %in% paramTab$ItemID,]
-  stu <- stuItems[order(stuItems$key), ]
-  stu <- split(stu, stu[[idVar]])
   paramTab <- paramTab[order(paramTab$ItemID),]
+  stu <- stuItems[order(stuItems$key), ]
+  # check response ranges
+  agg <- data.frame(key = unique(stu$key))
+  for(i in 1:nrow(agg)) {
+    agg$scorePoints[i] <- subset(paramTab, ItemID == agg$key[i], "scorePoints")[[1]]
+    vals <- stu$score[stu$key == agg$key[i]]
+    # drop missing code
+    vals <- vals[!vals %in% paramTab$missingCode[paramTab$ItemID == agg$key[i]]]
+    if(agg$scorePoints[i] == 1) {
+      expectedOccupied <- 0:1
+    } else {
+      if(polyModel == "gpcm") {
+        expectedOccupied <- seq(0, agg$scorePoints[i], by=1)
+      } else {
+        expectedOccupied <- seq(1, agg$scorePoints[i]+1, by=1)
+      }
+    }
+    agg$expectedOccupied[i] <- paste( expectedOccupied, collapse=":")
+    agg$occupied[i] <- paste(names(table(vals)), collapse=":")
+    agg$Result[i] <- ifelse( any(!expectedOccupied %in% names(table(vals)) ), "!", "\U02713")
+    # red check overrules other states
+    agg$Result[i] <- ifelse( any(!names(table(vals)) %in% expectedOccupied), "\U274C", agg$Result[i])
+  }
+  rownames(agg) <- paste0(agg$Result, " " , agg$key)
+  agg$score <- NULL
+  agg$key <- NULL
+  if( any(agg$Result %in% "\U274C") ) {
+    agg$Result <- NULL
+    if(verbose >= 1) {
+      print(agg)
+      stop("Some items score points inconsistent with expectations.")
+    }
+    stop("Some items score points inconsistent with expectations; increase verbose level to at least 1 see table.")
+  }
+  agg$Result <- NULL
+  stu <- split(stu, stu[[idVar]])
 
   # subset to students who have at least one valid score
-  stuDat <- stuDat[stuDat[[idVar]] %in% names(stu),]
+  stuDat <- stuDat[stuDat[[idVar]] %in% names(stu), ]
 
   # now form X
   trms <- delete.response(terms(formula))
-  m <- model.frame(trms, data=stuDat)
+  m <- model.frame(trms, data=stuDat, drop.unused.levels = TRUE)
   X <- model.matrix(formula, m)
   #for prediction
   contrasts <- attributes(X)$contrasts
@@ -613,6 +666,9 @@ mml <- function(formula,
   ### This portion of the code computes all the likelihood evaluations
   ### and does so outside of the function that is maximized
   ### This saves a lot of overhead by using fixed quadrature points
+  if(verbose >= 1) {
+    message("Calculating likelihood function.")
+  }
   if(multiCore) {
     # use multiple cores to calculate rr1
     rr1 <- calcRR1_dopar(stu, Q, polyModel, paramTab, nodes, fast)
@@ -625,43 +681,15 @@ mml <- function(formula,
   if(!all.equal(colnames(rr1), stuDat[[idVar]])) {
     stop("Sorting error in mml.")
   }
+  eDecomp <- eigen(crossprod(X))
+  if(verbose >= 1) {
+    message(paste0("design matrix condition number = ", round(eDecomp$values[1] / eDecomp$values[length(eDecomp$values)],4) ))
+  }
+  if( (min(eDecomp$values) < 0) || eDecomp$values[1] / eDecomp$values[length(eDecomp$values)] > 1/.Machine$double.eps) {
+    stop("Design matrix exactly singular. Adjust covariates to avoid perfect multicolinearity.")
+  }
   fn2 <- fn.regression(X_=X, i=NULL, wv=weightVar, rr1=rr1, nodes=nodes, stuDat=stuDat)
-  fn2g <- function(par) {
-    fn2(par, gr=TRUE)
-  }
-  opt <- optim(startVal, fn=fn2, gr=fn2g, method="BFGS", control=list(maxit=1e5, reltol=1e-6))
-  fn2h <- function(par) {
-    fn2(par, hess=TRUE)
-  }
-  Newton <- function(par0, iter0) {
-    opt <- list(par=par0, iter=iter0, convergence=0)
-    gr <- 1
-    while(max(gr) > 1e-5) {
-      gr <- fn2g(opt$par)
-      H <- fn2h(opt$par)
-      update <- qr.solve(qr(H), -1*gr)
-      opt$par <- opt$par + update
-      opt$iter <- opt$iter + 1
-      gr <- gr / pmax(1, opt$par)
-    }
-    opt$par <- as.vector(opt$par)
-    opt$value <- fn2(opt$par)
-    return(opt)
-  }
-  # push to actual convergence
-  opt <- Newton(opt$par, unname(opt$counts["gradient"])) # number of BFGS steps
-  # make sure the root var is the positive root (the SD)
-  opt$par[length(opt$par)] <- abs(opt$par[length(opt$par)])
-  iter <- opt$iter
-  if(opt$convergence==0) {
-    convergence <- "converged"
-  } else {
-    if(opt$convergence==1) {
-      convergence <- "Iteration limit reached"
-    } else {
-      convergence <- "Did not converge"
-    }
-  }
+  opt <- robustOptim(fn2, startVal, verbose=verbose, X=X)
   posteriorEsts <- fn2(opt$par, returnPosterior=TRUE)
   names(opt$par) <- c(colnames(X), "s")
   # default location and scale
@@ -675,11 +703,11 @@ mml <- function(formula,
     obs <- sum(apply(rr1,2,sum)>0)
     weightedObs <- obs
   } else {
-    obs <- sum(stuDat[,weightVar]>0 & apply(rr1,2,sum)>0) # number with positive weight, at least one response
-    weightedObs <- sum(stuDat[apply(rr1,2,sum)>0,weightVar]) # sum of weights for those with positive weight, at least one response
+    obs <- sum(stuDat[ , weightVar] > 0 & apply(rr1, 2, sum) > 0) # number with positive weight, at least one response
+    weightedObs <- sum(stuDat[apply(rr1, 2, sum) > 0, weightVar]) # sum of weights for those with positive weight, at least one response
   }
   coefficients <- opt$par
-  names(coefficients) <-nms
+  names(coefficients) <- nms
   # report on theta scale if no scale found
   if(is.na(scale) & is.na(location)) {
     scale <- 1
@@ -694,19 +722,21 @@ mml <- function(formula,
     scale <- 1
     location <- 0
   }
+  assign("insd", FALSE, envir=environment(fun=fn2))
   structure(list(call = call,
                  coefficients = coefficients,
                  LogLik = -1/2*opt$value,
                  X = X,
-                 Convergence = convergence,
+                 Convergence = opt$convergence,
                  location = location,
                  scale = scale,
                  lnlf= fn2,
                  rr1= rr1,
                  stuDat = stuDat,
+                 stuItems = stuItems,
                  weightVar = weightVar,
                  nodes = nodes,
-                 iterations = iter,
+                 iterations = opt$iter,
                  obs = obs,
                  weightedObs = weightedObs,
                  strataVar = strataVar,
@@ -718,11 +748,12 @@ mml <- function(formula,
                  paramTab = paramTab,
                  fast = fast,
                  idVar = idVar,
-                 posteriorEsts = posteriorEsts),
+                 posteriorEsts = posteriorEsts,
+                 itemScorePoints = agg),
             class = "mmlMeans")
 }
 
-#' @importFrom stats optimize
+#' @importFrom stats optimize optim reshape rnorm
 mmlCor <- function(Xb1,
                    Xb2,
                    s1,
@@ -731,33 +762,17 @@ mmlCor <- function(Xb1,
                    rr2,
                    nodes,
                    weights=NULL,
-                   fast=TRUE) { 
+                   fast=TRUE,
+                   verbose=0) { 
   # fn2 uses the Fisher-Z transformation
   # fine rebins rr1 for large correlations where numerical integration becomes difficult
   fn2f <- fnCor(Xb1=Xb1, Xb2=Xb2, s1=s1, s2=s2, w=weights, rr1=rr1, rr2=rr2, nodes=nodes, fine=TRUE, fast = fast)
   ## optimize in Fisher-Z space
-  # assumes no local minima
-  # -5/5 are close enough to cor=-1/1 to use
-  opt <- optimize(fn2f, c(-5, 5))
+  # first ball park
+  opt <- optimize(fn2f, c(1, 3), tol=.Machine$double.eps^0.25)$minimum
   # transform back to original space and return result
-  return(list(rho=tanh(opt$minimum) * s1 * s2, corLnl=fn2f))
+  return(list(rho=tanh(opt) * s1 * s2, corLnl=fn2f))
 }
-
-# unused
-Newton <- function(fn, start, min, max){ 
-  opt <- optimize(fn, c(-10, 10), tol=0.1)
-  here <- opt$minimum
-  fnhere <- fn(here)
-  grHere <- getGrad(fn, here)
-  Hhere <- as.numeric(getHessian(fn, here))
-  hereProposal <- here - grHere / Hhere
-  fnhereP <- fn(hereProposal)
-  if(fnhereP < opt$objective) {
-    return(hereProposal)
-  }
-  return(opt$minimum)
-}
-
 
 cleanDichotParamTab <- function(dpt) {
   if(!is.null(dpt)) {
@@ -871,4 +886,75 @@ condenseParamTab <- function(dpt, ppt, dvars) {
   }
   paramTab$ItemID <- as.character(paramTab$ItemID)
   return(paramTab)
+}
+
+# optimize fn.regression function fn
+# verbose makes the function say more when verbose gets larger.
+# needed because we use several methods in sucession
+robustOptim <- function(fn, X, par0=NULL, verbose=0) {
+  fnDerivs <- getDerivs(fn)
+  if(verbose >= 1) {
+    message("Initial optimization with Quasi-Newton.")
+  }
+  opt <- optim(par0, fn=fn, gr=fnDerivs$grad, method="L-BFGS-B", control=list(maxit=1e5, factr = 1e-10, trace = verbose >= 2, lmm=10, parscale=1/c(pmax(1,apply(X,2,sd)),1)))
+  # push to actual convergence
+  if(verbose >= 1) {
+    message("Further refining optimization with Newton's method.")
+  }
+  opt <- Newton(opt$par, unname(opt$counts["gradient"]), verbose, fn, fnDerivs$grad, fnDerivs$hess) # number of BFGS steps
+  # make sure the root var is the positive root (the SD)
+  opt$par[length(opt$par)] <- sqrt(ifelse(opt$par[length(opt$par)] < 1, exp(opt$par[length(opt$par)] - 1), opt$par[length(opt$par)]^2))
+  if(opt$convergence == 0) {
+    convergence <- "converged"
+  } else {
+    if(opt$convergence == 1) {
+      convergence <- "Iteration limit reached"
+    } else {
+      convergence <- "Did not converge"
+    }
+  }
+  opt$convergence <- convergence
+  return(opt)
+}
+
+getDerivs <- function(fn) {
+  fnGrad <- function(par) {
+    fn(par, gr=TRUE)
+  }
+  fnHess <- function(par) {
+    fn(par, hess=TRUE)
+  }
+  return(list(grad=fnGrad, hess=fnHess))
+}
+
+Newton <- function(par0, iter0, verbose, fn, fng, fnh) {
+  opt <- list(par=par0, iter=iter0, convergence=0)
+  gr <- 1
+  # this is the minimum value. Rest if it steps that far out
+  opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
+  while(max(abs(gr)) > length(opt$par) * 1e-5 && opt$iter < 50 + iter0) {
+    gr <- fng(opt$par)
+    H <- fnh(opt$par)
+    # sometimes H is just not PD, adjust it slightly to be PD in that case
+    H <- nearPD2(H)
+    update <- qr.solve(qr(H), -1*gr)
+    opt$par <- opt$par + update
+    opt$iter <- opt$iter + 1
+    gr <- gr / pmax(1, opt$par)
+    if(verbose >= 2) {
+      message(paste0("  max gradient=", max(abs(gr))))
+    }
+    # this is the minimum value. Rest if it steps that far out
+    opt$par[length(opt$par)] <- max( (log(1e-6)+1), opt$par[length(opt$par)])
+  }
+  if(opt$iter == 50 + iter0) {
+    opt$convergence <- "max iterations reached"
+    warning("Convergence not reached. Try scaling parameters.")
+  }
+  opt$par <- as.vector(opt$par)
+  opt$value <- fn(opt$par)
+  if(verbose >= 2) {
+    message(paste0("final lnl=", opt$value))
+  }
+  return(opt)
 }

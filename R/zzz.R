@@ -3,4 +3,4 @@
   packageStartupMessage(paste0("Dire v", utils::packageDescription("Dire")$Version, "\n"))
 }
 
-globalVariables(c("dopari", "testID", "subtestID", "nodes"))
+globalVariables(c("dopari", "testID", "subtestID", "nodes", "ItemID"))

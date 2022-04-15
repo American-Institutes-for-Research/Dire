@@ -10,8 +10,8 @@ if (Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("RSTUDIO_TERM")) &&
   parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
 }
 
-cl <- makeCluster(2, outfile="")
-registerDoParallel(cl, cores=2)
+cl <- makeCluster(4, outfile="")
+registerDoParallel(cl, cores=4)
 set.seed(142857)
 n <- 2000
 theta <- rnorm(n)
@@ -130,7 +130,11 @@ stuDat$origwt <- mat$origwt <- runif(nrow(stuDat)) * 4 * abs(stuDat$x1 + 3)
 # library(haven)
 # write_sav(mat,'Q:/Direct Estimation/QC/math 2003 g8 number subtest/math2003g8PBRandom2k_x1_poly.sav')
 # tests:
-mml1 <- mml(stuItems=split(stuItems, stuItems$oppID), stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab, Q=34, idVar="oppID", multiCore=FALSE, testScale=testDat)
+stuItemse <- stuItems
+stuItemse$score[stuItemse$key == "m073601"][1] <- 6
+expect_error(mml1 <- mml(stuItems=stuItemse, stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab, Q=34, idVar="oppID", multiCore=FALSE, testScale=testDat), "inconsistent with expectations")
+expect_error(capture.output(mml1 <- mml(stuItems=stuItemse, stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab, Q=34, idVar="oppID", multiCore=FALSE, testScale=testDat, verbose=4)), "inconsistent with expectations")
+mml1 <- mml(stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab, Q=34, idVar="oppID", multiCore=FALSE, testScale=testDat)
 mml1Taylor <- summary(mml1, varType="Taylor", strataVar="repgrp1", PSUVar="jkunit", gradientHessian=TRUE)
 
 expect_equal(coef(mml1Taylor)[,1], c(`(Intercept)` =  281.432554746317, `Population SD` = 36.387298620653), tolerance=2000*sqrt(.Machine$double.eps))
@@ -148,4 +152,9 @@ expect_equal(coef(mml2Taylor)[,1], c(`(Intercept)` = 276.190834717205, x1 = 10.4
 
 expect_equal(coef(mml2Taylor)[,2], c(`(Intercept)` = 2.0454799919857, x1 = 3.45532352630566, `Population SD` = 0.95252258578783), tolerance=2*(.Machine$double.eps)^0.25)
 
+stuItems$score[stuItems$key == "m073601"][1] <- 6
+expect_error(mml1 <- mml(stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab, Q=34, idVar="oppID", multiCore=FALSE, testScale=testDat), "inconsistent")
+
 stopCluster(cl)
+
+

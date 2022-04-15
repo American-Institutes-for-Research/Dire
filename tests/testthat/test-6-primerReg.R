@@ -78,7 +78,7 @@ dummyVars[dummyVars == "sdracemAmer Ind/Alaska Natv"] <- "sdracemInd"
 # make stuItems (long) and stuDat 
 stuItems <- stuItems1 <- edf[,c("sid", items)]
 stuItems <- reshape(data=stuItems, varying=c(items), idvar=c("sid"), direction="long", v.names="score", times=items, timevar="key")
-stuDat <- edf[,c("sid", "origwt", "repgrp1", "jkunit", dummyVars, getWeightJkReplicates(data=sdf, "origwt"))]
+stuDat <- edf[,c("sid", "origwt", "repgrp1", "jkunit", dummyVars)]
 
 # make testDat 
 testDat <- data.frame(test=c("composite", "composite", "composite") ,
@@ -87,30 +87,38 @@ testDat <- data.frame(test=c("composite", "composite", "composite") ,
                       scale=c(37.7297, 36.3887, sum(c(0.3,0.7) * c(37.7297, 36.3887))),
                       subtestWeight=c(0.3,0.7, NA))
 
-
-# save for AM
-if(FALSE) {
-  
-  saveSav(stuItems, edf, "IRTparams", "~/", idVar="sid")
-  paramTab2AMdct(dichotParamTab=dichotParamTab,
-                 polyParamTab=polyParamTab,
-                 testScale=testDat,
-                 weightVar="origwt",
-                 PSUVar="jkunit",
-                 testName="IRTparams",
-                 saveFilePath="~/")
-  
-}
-
 context("NAEPPrimer Regression Non-composite Algebra")
 # algebra
 mmlA <- mml(alg ~ dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
               sdracemInd + sdracemOther, stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             Q=34, idVar="sid", testScale=testDat, composite=FALSE, weightVar="origwt",
-            minNode = -4, maxNode = 4, bobyqaControl=list(maxfun=1e4),
+            minNode = -4, maxNode = 4, 
             strataVar="repgrp1", PSUVar="jkunit")
 mmlATaylor <- summary(mmlA, varType="Taylor", gradientHessian=TRUE, strataVar="repgrp1", PSUVar="jkunit")
 
+# similarly, the PV results should be approximately equal
+pvA <- drawPVs(mmlA, construct="alg")
+stuDatA <- merge(stuDat, pvA[["data"]], by.x="sid", by.y="id", all.x=TRUE, all.y=FALSE)
+lmA <- summary(lm(alg_dire1 ~  dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
+                  sdracemInd + sdracemOther, data=stuDatA, weights=stuDatA$origwt))
+expect_equal(coef(mmlATaylor)[1:6, 1], lmA$coef[1:6, 1], 0.05)
+
+# check stochastic beta works
+pvAs <- drawPVs(mmlATaylor, construct="alg", stochasticBeta=TRUE)
+stuDatAs <- merge(stuDat, pvAs[["data"]], by.x="sid", by.y="id", all.x=TRUE, all.y=FALSE)
+lmAs <- summary(lm(alg_dire1 ~  dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
+                   sdracemInd + sdracemOther, data=stuDatAs, weights=stuDatA$origwt))
+expect_equal(coef(mmlATaylor)[1:6, 1], lmAs$coef[1:6, 1], 0.05)
+
+# check the posterior means agree with the MML estimate
+pvApos <- drawPVs(mmlA, construct="alg", returnPosterior =TRUE)
+pvApos <- pvApos[["posterior"]]
+pvApos$mus <- pvApos$mu * mmlA$scale + mmlA$location
+stuDatApos <- merge(stuDat, pvApos, by.x="sid", by.y="id", all.x=TRUE, all.y=FALSE)
+lmApos <- summary(lm(mus ~  dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
+                     sdracemInd + sdracemOther, data=stuDatApos, weights=stuDatApos$origwt))
+# this should be exact
+expect_equal(coef(mmlATaylor)[1:6, 1], lmApos$coef[1:6, 1])
 
 # MML Regression	
 # Run completed on Wednesday, December 09, 2020. 09:54:09 AM
@@ -164,7 +172,6 @@ mmlN <- mml(num ~ dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pa
             weightVar="origwt",
             minNode = -4, 
             maxNode = 4,  
-            bobyqaControl=list(maxfun=1e4),
             strataVar="repgrp1", 
             PSUVar="jkunit")
 mmlNTaylor <- summary(mmlN, varType="Taylor", gradientHessian=TRUE, strataVar="repgrp1", PSUVar="jkunit")
@@ -213,9 +220,37 @@ context("NAEPPrimer Regression Composite")
 mmlC <- mml(composite ~ dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
               `sdracemInd` + sdracemOther, stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             Q=34, idVar="sid", testScale=testDat, composite=TRUE, weightVar="origwt",
-            minNode = -4, maxNode = 4, bobyqaControl=list(maxfun=1e4),
+            minNode = -4, maxNode = 4, 
             strataVar="repgrp1", PSUVar="jkunit")
 mmlCTaylor <- summary(mmlC, varType="Taylor", gradientHessian=TRUE)
+
+### similarly, the PV results should be approximately equal
+# draw the PVs
+pvC <- drawPVs(mmlC)
+stuDatC <- merge(stuDat, pvC[["data"]], by.x="sid", by.y="id", all.x=TRUE, all.y=FALSE)
+# first for a subscale
+lmA2 <- summary(lm(alg_dire1 ~  dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
+                   sdracemInd + sdracemOther, data=stuDatC, weights=stuDatC$origwt))
+# this is the above, just Algebra mml estimate
+expect_equal(coef(mmlATaylor)[1:6, 1], lmA2$coef[1:6, 1], 0.05)
+# now use full composite
+lmC2 <- summary(lm(composite_dire1 ~  dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
+                   sdracemInd + sdracemOther, data=stuDatC, weights=stuDatC$origwt))
+# this is the above, just Algebra mml estimate
+expect_equal(coef(mmlCTaylor)[1:6, 1], lmC2$coef[1:6, 1], 0.05)
+
+# now draw with stochastic beta
+pvCs <- drawPVs(mmlCTaylor, stochasticBeta=TRUE)
+stuDatCs <- merge(stuDat, pvCs[["data"]], by.x="sid", by.y="id", all.x=TRUE, all.y=FALSE)
+# first for a subscale
+lmA2s <- summary(lm(alg_dire1 ~  dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
+                    sdracemInd + sdracemOther, data=stuDatCs, weights=stuDatC$origwt))
+expect_equal(coef(mmlATaylor)[1:6, 1], lmA2s$coef[1:6, 1], 0.05)
+# now composite
+lmC2s <- summary(lm(composite_dire1 ~  dsexFemale + sdracemBlack + sdracemHispanic + `sdracemAsian/Pacific Island` + 
+                    sdracemInd + sdracemOther, data=stuDatCs, weights=stuDatC$origwt))
+expect_equal(coef(mmlCTaylor)[1:6, 1], lmC2s$coef[1:6, 1], 0.05)
+
 
 # MML Composite Regression	
 # Run completed on Wednesday, December 09, 2020. 12:54:46 PM

@@ -5,14 +5,14 @@ gradgradT <- function(location, ii, X_subset, weightVar, rr1=rr1, stuDat=stuDat,
     gri <- c()
     k <- length(location)/length(rr1)
     for(i in 1:length(rr1)) {
-      fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1[[i]], stuDat=stuDat, nodes=nodes)
+      fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1[[i]], stuDat=stuDat, nodes=nodes, inside=FALSE)
       loc <- location[1:k]
       gri <- c(gri, -1/2*getGrad(fn2, loc))
       location <- location[-(1:k)]
     }
     return(gri %*% t(gri))
   }
-  fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1, stuDat=stuDat, nodes=nodes)
+  fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1, stuDat=stuDat, nodes=nodes, inside=FALSE)
   # deviance is 2*lnl, so -1/2*grad of deviance is grad of lnl
   gr <- -1/2*getGrad(fn2, location)
   return(gr %*% t(gr))
@@ -23,14 +23,14 @@ gradInd <- function(location, ii, X_subset, weightVar, rr1=rr1, stuDat=stuDat, n
     gri <- c()
     k <- length(location)/length(rr1)
     for(i in 1:length(rr1)) {
-      fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1[[i]], stuDat=stuDat, nodes=nodes)
+      fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1[[i]], stuDat=stuDat, nodes=nodes, inside=FALSE)
       loc <- location[1:k]
       gri <- c(gri, -1/2*getGrad(fn2, loc))
       location <- location[-(1:k)]
     }
     return(gri)
   }
-  fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1, stuDat=stuDat, nodes=nodes)
+  fn2 <- fn.regression(X_=X_subset, i=ii, wv=weightVar, rr1=rr1, stuDat=stuDat, nodes=nodes, inside=FALSE)
   # deviance is 2*lnl, so -1/2*grad of deviance is grad of lnl
   gr <- -1/2*getGrad(fn2, location)
   return(gr)
@@ -55,8 +55,6 @@ getHessian <- function(func, x, inputs=1:length(x), f0=NULL, h = (abs(x) + 1) * 
                   }))
   }
   # do not let h get smaller than the fourth root of the machine precision
-  # but let it scale up when x is large
-#h <- (abs(x) + 1) * (.Machine$double.eps)^0.25 
   # derivatives at a larger x (fp, for f plus h) and smaller x (fm for f minus h)
   hess <- matrix(NA, nrow=k, ncol=k)
   for(i in 1:k) {

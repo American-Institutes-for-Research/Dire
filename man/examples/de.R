@@ -105,12 +105,10 @@ mmlN <- mml(num ~ dsex,
 mmlNs <- summary.mmlMeans(mmlN, varType="Taylor")
 mmlNs
 
-set.seed(2)
+# draw plausible values for mmlA
 head(pvd <- drawPVs.mmlMeans(mmlA))
-head(pvs <- drawPVs.mmlMeans(summary.mmlMeans(mmlA, varType="Taylor"), stochasticBeta=T))
-sd(apply(pvd[,-1], 2, mean))
-sd(apply(pvs[,-1], 2, mean)) # should be larger, accounts for uncertainty in beta
-
+# alternative specification
+head(pvs <- drawPVs.mmlMeans(summary.mmlMeans(mmlA, varType="Taylor"), stochasticBeta=TRUE))
 
 # composite regression 
 mmlC <- mml(composite ~ dsex ,
@@ -122,10 +120,10 @@ mmlC <- mml(composite ~ dsex ,
 # summary, with Taylor standard errors
 summary(mmlC, varType="Taylor")
 
-set.seed(2)
+# draw plausible values for mmlC
 head(pvd <- drawPVs.mmlCompositeMeans(mmlC))
-mmlCs <- summary.mmlCompositeMeans(mmlC, varType="Taylor")
-head(pvs <- drawPVs.mmlCompositeMeans(mmlCs, stochasticBeta=TRUE))
-
+# alternative specification 
+mmlCsum <- summary.mmlCompositeMeans(mmlC, varType="Taylor")
+head(pvs <- drawPVs.mmlCompositeMeans(mmlCsum, stochasticBeta=TRUE))
 
 }

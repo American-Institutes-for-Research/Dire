@@ -5,7 +5,15 @@
 #X_ - the matrix of X values, defaults to all X , used for calculating group likelihoods
 #i - list of indexes for individual likelihood (used to subset weights and r22)
 #repweightVar  - the replicate weight for replicate variance estimation
-fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes) {
+#inside - TRUE if inside mix, otherwise linear and inside=FALSE
+fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE) {
+  if(length(wv) > 1) {
+    stop("Must specify NULL weight or exactly one.")
+  }
+  # any lets the NULL case pass
+  if(any(! wv %in% colnames(stuDat))) {
+    stop("weight wv not in X_ wv=", dQuote(wv), " column names of X_", pasteItems(dQuote(colnames(X_))))
+  }
   K <- ncol(X_)
   # fix rr1 to just regard this data
   if(!is.null(i)) {
@@ -24,42 +32,60 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes) {
   # for numerical stability, premultiply by rr1m, then remove it when calculating sum(w * log(cs))
   rr1m <- (1/(.Machine$double.eps)^0.5)/apply(rr1p, 2, max) 
   rr1q <- t(t(rr1p) * rr1m) 
+  insd <- inside
   function(par, returnPosterior=FALSE, gr=FALSE, hess=FALSE) {
-    if(hess) {
-      # break up par into beta and residual components
-      B <- par[1:K]
+    # break up par into beta and residual components
+    B <- par[1:K]
+    if(insd) {
+      s2 <- ifelse(par[(K+1)] < 1, exp(par[(K+1)] - 1), par[(K+1)]^2)
+    } else {
       s2 <- par[(K+1)]^2
-      s <- sqrt(s2)
+    }
+    s2 <- max(s2, 1e-6)
+    s <- sqrt(s2)
+    if(hess) {
+
       # form prediction
       XB <- X_ %*% B
       # residual, per indivudal (outer sapply), per node (inner sapply)
       nodes.minus.XB <- t(t(matrix(nodes, nrow=length(nodes), ncol=nrow(XB))) - as.vector(XB))
       # likelihood of normal distribution for residuals nodes.minus.XB
       rr2 <- rr1p * ((1/(sqrt(2 * pi * s2))) * exp(-((nodes.minus.XB)^2/(2 * s2))))
-      H <- matrix(0,nrow=K+1,ncol=K+1)
+      H <- matrix(0, nrow=K+1, ncol=K+1)
+      denom <- colSums(rr2)
+      denom2 <- denom^2
+      # final parameter done numerically
+      par_ <- par[(K+1)] + 1e-6
+      # apply non-linear transform
+      s2_ <- ifelse(par_ < 1, exp(par_ - 1), par_^2)
+      s_ <- sqrt(s2_)
+      # likelihood of normal distribution for residuals nodes.minus.XB
+      rr2_ <- rr1p * ((1/(sqrt(2 * pi * s_^2))) * exp(-((nodes.minus.XB)^2/(2 * s_^2))))
+      rr2mxb <- (rr2 * nodes.minus.XB)
       for(i in 1:K) {
+        fi <- t( t(rr2mxb) * X_[,i]/s2)
+        num <- apply(fi, 2, sum)
         for(j in i:K) {
-          fi <- t(   t((rr2 * nodes.minus.XB)) * X_[,i]/s2)
-          fj <- t(   t((rr2 * nodes.minus.XB)) * X_[,j]/s2)
-          num <- apply(fi, 2, sum)
-          numPrime <- apply(t(t(rr2) * X_[,i]*X_[,j]/s2) - t( t(fj * nodes.minus.XB) * X_[,i])/s2, 2, sum)
-          denom <- colSums(rr2)
+          fj <- t( t(rr2mxb) * X_[,j]/s2)
+          numPrime <- apply(t(t(rr2) * X_[,i] * X_[,j] / s2) - t( t(fj * nodes.minus.XB) * X_[,i])/s2, 2, sum)
           denomPrime <- apply(fj, 2, sum)
-          H[j,i] <- H[i,j] <- 2*sum(w*(numPrime * denom + num * denomPrime) / denom^2) # not quite
+          H[j,i] <- H[i,j] <- 2*sum(w*(numPrime * denom + num * denomPrime) / denom2)
         }
-      }
-      for(i in 1:K) {
-        gr0 <- -2 * sum(w*apply( t(   t((rr2 * nodes.minus.XB)) * X_[,i]/s2), 2, sum)/colSums(rr2))
-        # break up par into beta and residual components
-        s_ <- s + 1e-6
-        # likelihood of normal distribution for residuals nodes.minus.XB
-        rr2_ <- rr1p * ((1/(sqrt(2 * pi * s_^2))) * exp(-((nodes.minus.XB)^2/(2 * s_^2))))
-        gr_ <- -2 * sum(w*apply( t(   t((rr2_ * nodes.minus.XB)) * X_[,i]/s_^2), 2, sum)/colSums(rr2_))
+        # do numerical cross partial of variance term, taking care of the possibility of exp(x-1) transform
+        gr0 <- -2 * sum(w * apply(fi, 2, sum)/denom)
+        gr_ <- -2 * sum(w*apply( t( t((rr2_ * nodes.minus.XB)) * X_[,i]/s_^2), 2, sum)/colSums(rr2_))
         H[K+1,i] <- H[i,K+1] <- (gr_ - gr0)/1e-6
       }
+      # now variance of variance term
       gr0 <- -2*sum(w*apply( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3), 2, sum)/colSums(rr2))
       # break up par into beta and residual components
-      s_ <- s + 1e-6
+      par_ <- par[(K+1)] + 1e-6
+      if(insd) {
+        s2_ <- ifelse(par_ < 1, exp(par_ - 1), par_^2)
+      } else {
+        s2_ <- par_
+      }
+      s_ <- sqrt(s2_)
       # likelihood of normal distribution for residuals nodes.minus.XB
       rr2_ <- rr1p * ((1/(sqrt(2 * pi * s_^2))) * exp(-((nodes.minus.XB)^2/(2 * s_^2))))
       gr_ <- -2*sum(w*apply( rr2_ * (-1/s_ + 1*(nodes.minus.XB)^2/s_^3), 2, sum)/colSums(rr2_))
@@ -67,27 +93,25 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes) {
       return(H)
     }
     if(gr) {
-      # break up par into beta and residual components
-      B <- par[1:K]
-      s2 <- par[(K+1)]^2
-      s <- sqrt(s2)
       # form prediction
       XB <- X_ %*% B
       # residual, per indivudal (outer sapply), per node (inner sapply)
       nodes.minus.XB <- t(t(matrix(nodes, nrow=length(nodes), ncol=nrow(XB))) - as.vector(XB))
       # likelihood of normal distribution for residuals nodes.minus.XB
       rr2 <- rr1p * ((1/(sqrt(2 * pi * s2))) * exp(-((nodes.minus.XB)^2/(2 * s2))))
-      gr_res <- rep(0,length(par))
+      gr_res <- rep(0, length(par))
+      rr2mxb <- (rr2 * nodes.minus.XB)
+      denom <- colSums(rr2)
       for(i in 1:K) {
-        gr_res[i] <- -2 * sum(w*apply( t(   t((rr2 * nodes.minus.XB)) * X_[,i]/s2), 2, sum)/colSums(rr2))
+        gr_res[i] <- -2 * sum(w* apply( t( t(rr2mxb) * X_[,i] / s2), 2, sum)/denom)
       }
-      gr_res[K+1] <- -2*sum(w*apply( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3), 2, sum)/colSums(rr2))
+      gr_res[K+1] <- -2*sum(w*apply( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3), 2, sum)/denom)
+      if(par[(K+1)] < 1) {
+        gr_res[K+1] <- gr_res[K+1] * 0.5 * exp(0.5*(par[(K+1)]-1)) 
+      }
+      gr_res[is.na(gr_res)] <- 0
       return(gr_res) 
     }
-
-    # break up par into beta and residual components
-    B <- par[1:K]
-    s2 <- par[(K+1)]^2
     # form prediction
     XB <- X_ %*% B 
     # residual, per indivudal (outer sapply), per node (inner sapply)
@@ -132,7 +156,7 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
   numUnits <- length(Xb1)
   nodes.minus.Xb1 <- t(Xb1 - t(matrix(nodes, nrow=numNodes, ncol=numUnits)))
   nodes.minus.Xb2 <- t(Xb2 - t(matrix(nodes, nrow=numNodes, ncol=numUnits)))
-  function(par, returnPosterior=FALSE, plot=FALSE, newXb1=NULL, newXb2=NULL) {
+  function(par, returnPosterior=FALSE, newXb1=NULL, newXb2=NULL, gr=FALSE, hess=FALSE, superFine=0) {
     if(!is.null(newXb1)) {
       if(length(newXb1) != numUnits) {
         stop("The dimensions of Xb1 must remain the same.")
@@ -145,16 +169,43 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
       }
       nodes.minus.Xb2 <- t(newXb2 - t(matrix(nodes, nrow=numNodes, ncol=numUnits)))
     }
+    if(returnPosterior & gr) {
+      stop("cannot return posterior gradient")
+    }
+    if(hess & gr) {
+      stop("can only return one of Hessian or gradient")
+    }
+    # will we go fine
+    finef <- min(floor( (abs(par))^1.5 ), 10) # cap at 10 before factor
+    if(superFine > 0) {
+      finef <- superFine
+    }
+    dofine <- finef > 1
     # par is propose correlation in Fisher-Z space, r is in correlation space
     r <- tanh(par)
     cov <- s1 * s2 * r
     Sigma <- matrix(c(s1^2, cov, cov, s2^2), ncol=2)
     detSigma <- s1^2*s2^2 - cov^2
-    # invert Sigma
-    SigmaInv <- 1/detSigma * matrix(c(s2^2, -1*cov, -1*cov, s1^2), ncol=2)
+    if(gr) {
+      dcov <- s1 * s2 * 1/(cosh(par)^2)
+      dDetSigma <- -2 * cov * s1 * s2 * (1/ (cosh(par)^2) )
+    }
+    if(hess) {
+      dcov <- s1 * s2 * 1/(cosh(par)^2)
+      ddcov <- -2 * s1 * s2 * sinh(par)/(cosh(par)^3)
+      dDetSigma <- -2 * cov * s1 * s2 * (1/ (cosh(par)^2) )
+      ddDetSigma <- -2 * dcov * s1 * s2 * (1/ (cosh(par)^2) ) + 4 * cov * s1 * s2 * sinh(par)/(cosh(par)^3)
+    }
+    #
     # calculates vector of (x-mu)T %*% SigmaInv %*% (x-mu)
     # where x-mu is for an individual member is nodes.minux.Xb1/2, a vector of length 2
     rr_ <- vector(length=numUnits)
+    if( (gr | hess) & !dofine) {
+      drr_ <- rr_ # another container for derivatives
+      if(hess) {
+        ddrr_ <- rr_ # another container for derivatives
+      }
+    }
     # this is a 2D integral
     # for nodes in dimension 1
     mat <- matrix(NA, nrow=numNodes, ncol=numNodes)
@@ -174,10 +225,14 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
         # student probability of the node on subscale j
         rr2j <- rr2[j, ]
         # for each 
-        epsilon <- rbind(nodesi, nodesj)
         # the next line works, these are equal: mvnResid[4] (next line) and
         #                                       t(epsilon[,4]) %*% SigmaInv %*% epsilon[,4]
-        mvnResid <- apply(epsilon * (SigmaInv %*% epsilon), 2, sum)
+        # also equivalent to:  apply(epsilon * (SigmaInv %*% epsilon), 2, sum)
+        # these use this sigma inverse, though solve could be used as well
+        #         SigmaInv <- 1/detSigma * matrix(c(s2^2, -1*cov, -1*cov, s1^2), ncol=2)
+        # and this defintion of epsilon
+        #         epsilon <- rbind(nodesi, nodesj)
+        mvnResid <- (1/detSigma) * (s1^2 * nodesi^2 - 2 * cov * nodesi * nodesj + s2^2 * nodesj^2)
         # check a single entry with this code:
         # a <- c(nodes.minus.Xb1[i,k], nodes.minus.Xb2[j,k])
         # t(a) %*% SigmaInv %*% a - mvnResid[k] # = 0, they are the same
@@ -193,15 +248,39 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
           m2  <- m2  + rr_ij * nodes[i] * nodes[j]
         }
         rr_ <- rr_ + rr_ij
+        if(gr & !dofine){
+          # mvnresid gradient
+          mvnResidNum <- (s1^2 * nodesi^2 - 2*cov * nodesi*nodesj + s2^2 * nodesj^2)      
+          dMvnResidNum <- - 2* dcov * nodesi * nodesj
+          dMvnResid <- (1/detSigma^2) * (detSigma *  dMvnResidNum  - mvnResidNum * dDetSigma)
+          # rr_ij gradient
+          drr_ij <- -(1/2) * rr_ij * (dDetSigma/detSigma + dMvnResid)
+          drr_ <- drr_ + drr_ij
+        }
+        if(hess & !dofine) {
+          mvnResidNum <- (s1^2 * nodesi^2 - 2*cov * nodesi*nodesj + s2^2 * nodesj^2)      
+          dMvnResidNum <- - 2* dcov * nodesi * nodesj
+          ddMvnResidNum <- - 2* ddcov * nodesi * nodesj
+          dMvnResid <- (1/detSigma^2) * (detSigma *  dMvnResidNum  - mvnResidNum * dDetSigma)
+          num <- (detSigma *  dMvnResidNum  - mvnResidNum * dDetSigma)
+          dnum <- (dDetSigma *  dMvnResidNum + detSigma *  ddMvnResidNum  - dMvnResidNum * dDetSigma - mvnResidNum * ddDetSigma)
+          ddMvnResid <- (1/detSigma^4) * (detSigma^2 * dnum - num * 2 * detSigma * dDetSigma)
+          # rr_ij gradient
+          drr_ij <- -(1/2) * rr_ij * (dDetSigma/detSigma + dMvnResid)
+          drr_ <- drr_ + drr_ij
+          ddrr_ij <- -(1/2) * rr_ij * ((detSigma*ddDetSigma-dDetSigma^2)/detSigma^2 + ddMvnResid) -(1/2) * drr_ij * (dDetSigma/detSigma + dMvnResid)
+          ddrr_ <- ddrr_ + ddrr_ij
+        }
         mat[i,j] <- sum(rr_ij)
       }
-    }
-    if(plot) {
-      plot(mat, main=paste0("r=",round(r,4)))
-    }
+    } # end for(i in 1:numNodes)
     cs <- pmax(.Machine$double.eps, rr_)
-
-    finef <- min(floor( (abs(par))^1.5 ), 10) # cap at 10 before factor
+    if( (gr | hess)  & !dofine) {
+      dcs <- ifelse(rr_ < .Machine$double.eps, 0, drr_)
+      if(hess) {
+        ddcs <- ifelse(rr_ < .Machine$double.eps, 0, ddrr_)
+      }
+    }
 
     if(returnPosterior){ # & finef <= 1) {
       if(finef <= 1) {
@@ -218,6 +297,12 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
       }
     }
     if(!fine | finef <=1) {
+      if(hess) {
+        return(-2 * sum(w * (cs*ddcs - dcs^2)/(cs^2)))
+      }
+      if(gr) {
+        return(-2 * sum(w * dcs/cs))
+      }
       return(-2 * (sum(w * log(cs)) + 2 * sum(w) * log(dTheta)))
     }
     rr1f <- matrix(NA, nrow=nrow(rr1)*finef, ncol=ncol(rr1))
@@ -236,8 +321,11 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
     nodes.minus.Xb1f <- t(Xb1 - t(matrix(nodesf, nrow=numNodes*finef, ncol=numUnits)))
     nodes.minus.Xb2f <- t(Xb2 - t(matrix(nodesf, nrow=numNodes*finef, ncol=numUnits)))
     rr2_ <- vector(length=numUnits)
-    if(plot) {
-      matf <- matrix(0, nrow=numNodes * finef, ncol=numNodes * finef)
+    if(gr | hess) {
+      drr2_ <- rr2_
+      if(hess) {
+        ddrr2_ <- rr2_ 
+      }
     }
     for(i in 2:(numNodes-1)) {
       nodesfi <- nodes.minus.Xb1f[(i-1)*finef + 1:finef, ]
@@ -248,13 +336,36 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
           rr2fj <- rr2f[(j-1)*finef + 1:finef, ]
           nodesfj <- nodes.minus.Xb2f[(j-1)*finef + 1:finef, ]
           for(fine_i in 1:finef) {
+            fnodesi <- nodesfi[fine_i, ]
             for(fine_j in 1:finef) {
-              epsilon <- rbind(nodesfi[fine_i, ], nodesfj[fine_j, ])
-              mvnResid <- apply(epsilon * (SigmaInv %*% epsilon), 2, sum)
+              fnodesj <- nodesfj[fine_j, ]
+              mvnResid <- (1/detSigma) * (s1^2 * fnodesi^2 - 2*cov * fnodesi*fnodesj + s2^2 * fnodesj^2)
               if(fast) {
                 rr_ij <- calcRrij(fine_i-1, fine_j-1, rr1fi, rr2fj, detSigma, mvnResid)
               } else {
                 rr_ij <- rr1fi[fine_i,] * rr2fj[fine_j,] * (2/pi) * exp(-1/2 * (log(detSigma) + mvnResid))
+              }
+              if(gr) {
+                # mvnresid gradient
+                mvnResidNum <- (s1^2 * fnodesi^2 - 2*cov * fnodesi*fnodesj + s2^2 * fnodesj^2)      
+                dMvnResidNum <- - 2* dcov * fnodesi * fnodesj
+                dMvnResid <- (1/detSigma^2) * (detSigma *  dMvnResidNum  - mvnResidNum * dDetSigma)
+                # rr_ij gradient
+                drr2_ij <- -(1/2) * rr_ij * (dDetSigma/detSigma + dMvnResid)
+                drr2_ <- drr2_ + drr2_ij
+              }
+              if(hess) {
+                mvnResidNum <- (s1^2 * fnodesi^2 - 2*cov * fnodesi*fnodesj + s2^2 * fnodesj^2)      
+                dMvnResidNum <- - 2* dcov * fnodesi * fnodesj
+                ddMvnResidNum <- - 2* ddcov * fnodesi * fnodesj
+                dMvnResid <- (1/detSigma^2) * (detSigma *  dMvnResidNum  - mvnResidNum * dDetSigma)
+                num <- (detSigma *  dMvnResidNum  - mvnResidNum * dDetSigma)
+                dnum <- (dDetSigma *  dMvnResidNum + detSigma *  ddMvnResidNum  - dMvnResidNum * dDetSigma - mvnResidNum * ddDetSigma)
+                ddMvnResid <- (1/detSigma^4) * (detSigma^2 * dnum - num * 2 * detSigma * dDetSigma)
+                drr_ij <- -(1/2) * rr_ij * (dDetSigma/detSigma + dMvnResid)
+                drr2_ <- drr2_ + drr_ij
+                ddrr_ij <- -(1/2) * rr_ij * ((detSigma*ddDetSigma-dDetSigma^2)/detSigma^2 + ddMvnResid) -(1/2) * drr_ij * (dDetSigma/detSigma + dMvnResid)
+                ddrr2_ <- ddrr2_ + ddrr_ij
               }
               if(returnPosterior) {
                 ii <- (i-1)*finef+fine_i
@@ -266,9 +377,6 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
                 m2  <- m2  + rr_ij * nodesf[ii] * nodesf[jj]
               }
               rr2_ <- rr2_ + rr_ij
-              if(plot) {
-                matf[(i-1)*finef+fine_i,(j-1)*finef+fine_j] <- sum(rr_ij)
-              }
             }
           }
         } else {
@@ -276,12 +384,18 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
         }
       }
     }
-    if(plot) {
-      plot(matf, main=paste0("r=",round(r,4)," fine=",finef))
-    }
     # log requires a probability above zero, use the smallest double
     # as a floor
     cs2 <- pmax(.Machine$double.eps, rr2_)
+    if(gr) {
+      dcs2 <- ifelse(rr2_ <= .Machine$double.eps, 0, drr2_)
+      return(-2 * sum(w * dcs2/cs2))
+    }
+    if(hess) {
+      dcs2 <- ifelse(rr2_ <= .Machine$double.eps, 0, drr2_)
+      ddcs2 <- ifelse(rr2_ < .Machine$double.eps, 0, ddrr2_)
+      return(-2 * sum(w * (cs2*ddcs2-dcs2^2)/(cs2^2)))
+    }
     if(returnPosterior) {
       mu1 <- mui/rr2_ # mean of var1
       mu2 <- muj/rr2_ # mean of var2
@@ -289,8 +403,7 @@ fnCor <- function(Xb1, Xb2, s1, s2, w, rr1, rr2, nodes, fine=FALSE, fast = TRUE)
       mu12 <- mui2/rr2_ # mean of mu1^2
       mu22 <- muj2/rr2_ # mean of mu2^2
       rho <- Cov/sqrt( (mu1^2 - mu12) * (mu2^2 - mu22) )
-#TODO: how should we handle zero division in calculating posterior. We get all three cases: 0/0, 0 /int, int/0
-      rho[!is.finite(rho)] <- 0 # replace division by zero, we might want to make this more strict
+      rho[!is.finite(rho)] <- 0 # replace division by zero
       return(rho)
     }
     # likelihood of normal distribution for residuals nodes.minus.XB

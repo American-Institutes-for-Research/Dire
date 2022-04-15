@@ -10,7 +10,7 @@ print.mmlMeans <- function(x, ...){
 predict.mmlMeans <- function(object, newData=NULL, ...) {
   if(!is.null(newData)) {
     trms <- delete.response(terms(object$formula))
-    m <- model.frame(trms, data=newData)
+    m <- model.frame(trms, data=newData, drop.unused.levels=TRUE)
     X <- model.matrix(trms, m, contrasts.arg = object$contrasts, xlev = object$xlevels)
   } else {
     X <- object$X
@@ -49,7 +49,7 @@ print.mmlCompositeMeans <- function(x, ...){
 mml.remap.coef <- function(coefficients, location, scale, noloc=FALSE) {
   coefficients <- coefficients * scale
   if(!noloc) {
-    coefficients[names(coefficients) == "(Intercept)"] <- coefficients[names(coefficients) == "(Intercept)"] + location
+    coefficients[grepl("(Intercept)", names(coefficients))] <- coefficients[names(coefficients) == "(Intercept)"] + location
   }
   return(coefficients)
 }
@@ -58,7 +58,7 @@ mml.remap.coef <- function(coefficients, location, scale, noloc=FALSE) {
 #' @method summary mmlCompositeMeans
 #' @export
 summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
-                                      varType=c("Taylor", "Taylor2"),
+                                      varType=c("Partial Taylor", "Taylor"),
                                       clusterVar=NULL, jkSumMultiplier=1, # cluster
                                       repWeight=NULL, # replicate
                                       strataVar=NULL, PSUVar=NULL, singletonFix=c("drop", "use mean"),# Taylor
@@ -67,15 +67,14 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
   # get varType and singletonFix cleaned up
   varType <- match.arg(varType)
   singletonFix <- match.arg(singletonFix)
-  # 
-  if(missing(strataVar)) {
-    if(is.null(object$strataVar) & varType %in% c("Taylor")) {
+  if(is.null(strataVar)) {
+    if(is.null(object$strataVar) & varType %in% c("Partial Taylor")) {
       stop(paste0("argument ", dQuote("strataVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
     }
     strataVar <- object$strataVar
   }
-  if(missing(PSUVar)) {
-    if(is.null(object$PSUVar) & varType %in% c("Taylor")) {
+  if(is.null(PSUVar)) {
+    if(is.null(object$PSUVar) & varType %in% c("Partial Taylor")) {
       stop(paste0("argument ", dQuote("PSUVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
     }
     PSUVar <- object$PSUVar
@@ -127,51 +126,7 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
       V0[block[[i]], block[[i]]] <- Vi
     }
   }
-  if(varType=="replicate") {
-    stop("Replicate weights not supported.") #no VCfull
-    repCoef <- matrix(0, nrow=length(repWeight), ncol=ncol(object$coef), dimnames=list(repWeight, colnames(object$coef)))
-    for(i in 1:M) {
-      obj <- list(X = object$X[[i]],
-                  stuDat = object$stuDat[[i]],
-                  coefficients = rawCoef[i, ],
-                  rr1 = object$rr1[[i]],
-                  nodes = object$nodes)
-      repi <- getVarReplicate(object = obj,
-                              H_B_prime = H_B_prime0[block[[i]], block[[i]]],
-                              repWeight=repWeight,
-                              jkSumMultiplier=jkSumMultiplier,
-                              returnVecs=TRUE)
-      repC <- lapply(repi, function(b) {
-          names(b) <- colnames(object$coef)
-          return(mml.remap.coef(b, object$testScale$location[i], object$testScale$scale[i]))
-        })
-      repC <- do.call(rbind, repC)
-      repCoef <- repCoef + object$testScale$subtestWeight[i] * repC
-    }
-    # already subtracted from mean
-    B0 <- coef(object)
-    jkB0 <- apply(repCoef, 2, mean)
-    # subtract off mean estimate
-    repDiff <- lapply(1:nrow(repCoef), function(i){
-      (repCoef[i,]-B0) %*% t(repCoef[i,]-B0)
-    })
-    varR <- jkSumMultiplier * Reduce("+", repDiff)
-    se <- sqrt(diag(varR))
-
-    tval <- as.vector(B0/se)
-    TAB <- cbind(Estimate = B0,
-                 StdErr = se,
-                 t.value = tval)
-    res <- object
-    res$summaryCall <- sumCall
-    res$coefficients <- TAB
-    res$VC <- varR
-    res$iHessian <- -1*H_B_prime0
-    res$weightedObs <- wo
-    class(res) <- "summary.mmlCompositeMeans"
-    return(res)
-  }
-  if(varType=="Taylor") {
+  if(varType=="Partial Taylor") {
     V0 <- 0 * H_B_prime0
     for(i in 1:M) {
       obj <- list(X = object$X[[i]],
@@ -205,8 +160,9 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
     for(i in 1:M) {
       VCfull[block[[i]], block[[i]]] <- td$scale[i]^2 * VCfull[block[[i]], block[[i]]]
     }
+
   }
-  if(varType=="Taylor2") {
+  if(varType=="Taylor") {
     Vi <- list()
     for(i in 1:M) {
       obj <- list(X = object$X[[i]],
@@ -242,6 +198,7 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
       }
     })
     #sum variance across over all strata
+    td <- object$testScale
     V_ar <- Reduce("+", V_a)
     V0 <- H_B_prime0 %*% V_ar %*% H_B_prime0
     VCfull <- V0
@@ -260,6 +217,9 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
         }      
       }
     }
+  }
+  if(is.null(colnames(VCfull))) {
+    # renames
     colnames(H_B_prime0) <- rownames(H_B_prime0) <- colnames(VCfull) <- rownames(VCfull) <- 1:nrow(H_B_prime0)
     for(i in 1:M) {
       rownames(H_B_prime0)[1:k + k*(i-1)] <- 
@@ -267,8 +227,6 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
         rownames(VCfull)[1:k + k*(i-1)] <-
         colnames(VCfull)[1:k + k*(i-1)] <- paste0(colnames(object$coefficients), "_", names(object$X)[i])
     }
-
-
   }
   # make a containder for scaled weights
   scaledCoef <- rawCoef
@@ -310,6 +268,7 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
   res$iHessian <- -1*H_B_prime0
   res$weightedObs <- wo
   res$VCfull <- VCfull
+  res$rawCoef <- rawCoef
   class(res) <- "summary.mmlCompositeMeans"
   return(res)
 }
@@ -317,16 +276,18 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
 #' @method summary mmlMeans
 #' @export
 summary.mmlMeans <- function(object, gradientHessian=FALSE,
-                             varType=c("consistent", "robust", "cluster", "replicate", "Taylor"),
+                             varType=c("consistent", "robust", "cluster", "Taylor"),
                              clusterVar=NULL, jkSumMultiplier=1, # cluster
                              repWeight=NULL, # replicate
                              strataVar=NULL, PSUVar=NULL, singletonFix=c("drop", "use mean"),# Taylor
                              ...){
   sumCall <- match.call()
-  if(missing(strataVar)) {
+  # keep these
+  latentCoef <- object$coefficients
+  if(is.null(strataVar)) {
     strataVar <- object$strataVar
   }
-  if(missing(PSUVar)) {
+  if(is.null(PSUVar)) {
     PSUVar <- object$PSUVar
   }
   H_B_prime <- getIHessian.mmlMeans(object, gradientHessian)
@@ -413,6 +374,7 @@ summary.mmlMeans <- function(object, gradientHessian=FALSE,
   }
   object$coefficients <- TAB
   object <- c(object, list("summaryCall" = sumCall,
+                           "latentCoef" = latentCoef,
                            "LL" = object$LogLik,
                            "VC" = VC,
                            "iHessian" = H_B_prime,
@@ -453,6 +415,10 @@ print.summary.mmlMeans <- function(x, ...){
     cat(paste0("Weighted observations = ", round(x$weightedObs,2), "\n"))
   }
   cat(paste0("location = ", x$location, " scale = ", x$scale, "\n"))
+  if("SubscaleVC" %in% names(x$Summary)) {
+    cat("\nEstimated subscale correlations:")
+    print(round(x$Summary$SubscaleVC, 2))
+  }
 } 
 
 #' @method print summary.mmlCompositeMeans
@@ -550,7 +516,8 @@ getIHessian.mmlMeans <- function(object, gradientHessian=FALSE, returnVars=FALSE
     H_B_prime <- -1 * Wsum/(Wsum-1) * solve(Reduce("+", vars))
   } else {
     # lnlf is actually the deviance function, so -1/2 maps it back to lnl
-    H_B_prime <- solve(-1/2*getHessian(object$lnlf, object$coefficients))
+    # text is the warning that will happen if nearPD2 finds a condition number over 400 and so warns the user about an unstable Hessian matrix.
+    H_B_prime <- solve(-1/2*nearPD2(getHessian(object$lnlf, object$coefficients), warn="Apparently singular Hessian matrix, standard error estimates are likely unstable."))
   }
   return(H_B_prime)
 }
@@ -604,10 +571,11 @@ getVarCluster <- function(object, H_B_prime, clusterVar) {
 
 getVarReplicate <- function(object, H_B_prime, repWeight, jkSumMultiplier=1, returnVecs=FALSE) {
   X <- object$X
-  B0  <- object$coefficients
+  B0 <- object$coefficients
+ 
   B_j <- lapply(repWeight, FUN=function(x){ #restimate with each weight 
-    fn2B <- fn.regression(X_=X, wv=x, rr1=object$rr1, stuDat=object$stuDat, nodes=object$nodes)
-    return(bobyqa(B0, fn2B)$par)
+    fn2B <- fn.regression(X_=X, wv=x, rr1=object$rr1, stuDat=object$stuDat, nodes=object$nodes, inside=TRUE)
+    return(robustOptim(fn2B, par0=object$coefficients, X=X)$par)
   })
   # for composite
   if(returnVecs) {

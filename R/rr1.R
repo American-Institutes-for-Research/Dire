@@ -54,7 +54,7 @@ calcRR1_dopar <- function(stu, Q, model, paramTab, nodes, fast) {
         dv <- pre_dv[!is.na(pre_dv)]
         d <- c(d, list(dv))
         if(x2[i] > length(dv)) {
-          stop(paste0("score higher than length of d. sid=",dopari$sid[1], " paramTab line=",pasteItems(pParams[i,])))
+          stop(paste0("score of ", dQuote(x2[i] - (model=='gpcm')), " higher than expected maximum of ", dQuote(length(dv) - (model=='gpcm')), ". on item ", dQuote(pParams$ItemID[i]), " person ", dQuote(dopari[1,1])))
         }
       }
       D <- pParams$D
@@ -128,7 +128,7 @@ calcRR1 <- function(stu, Q, model, paramTab, nodes, fast) {
         dv <- pre_dv[!is.na(pre_dv)]
         d <- c(d, list(dv))
         if(x2[i] > length(dv)) {
-          stop(paste0("score higher than length of d. sid=",dopari$sid[1], " paramTab line=",pasteItems(pParams[i,])))
+          stop(paste0("score of ", dQuote(x2[i] - (model=='gpcm')), " higher than expected maximum of ", dQuote(length(dv) - (model=='gpcm')), ". on item ", dQuote(pParams$ItemID[i]), " person ", dQuote(dopari[1,1])))
         }
       }
       D <- pParams$D
