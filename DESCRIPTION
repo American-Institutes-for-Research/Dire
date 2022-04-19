@@ -1,6 +1,6 @@
 Package: Dire
-Version: 2.0.0
-Date: 2022-04-15
+Version: 2.0.1
+Date: 2022-04-16
 Title: Linear Regressions with a Latent Outcome Variable
 Authors@R: c(person("Emmanuel", "Sikali", role="pdr", email = "Emmanuel.Sikali@ed.gov"),
              person("Paul", "Bailey", role=c("aut", "cre"), email="pbailey@air.org"),
@@ -11,7 +11,7 @@ Authors@R: c(person("Emmanuel", "Sikali", role="pdr", email = "Emmanuel.Sikali@e
 Maintainer: Paul Bailey <pbailey@air.org>
 Depends: R (>= 4.0.0)
 Imports: foreach, iterators, methods, Matrix, haven, Rcpp, MASS
-Description: Fit latent variable linear models, estimating score distributions for groups of people, following Cohen and Jiang (1999) <doi:10.2307/2669917>. In this model, a latent distribution is conditional on students item response, item characteristics as well as their contextual covariates. This latent trait is then integrated out. This software is intended to fit the same models as the existing software 'AM' <https://am.air.org/>. As of version 2, also allows the user to draw plausible values.
+Description: Fit latent variable linear models, estimating score distributions for groups of people, following Cohen and Jiang (1999) <doi:10.2307/2669917>. In this model, a latent distribution is conditional on students item response, item characteristics, and conditioning variables the user includes. This latent trait is then integrated out. This software is intended to fit the same models as the existing software 'AM' <https://am.air.org/>. As of version 2, also allows the user to draw plausible values.
 License: GPL-2
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, testthat, withr, doParallel, parallel,
@@ -28,7 +28,7 @@ Encoding: UTF-8
 RoxygenNote: 7.1.2
 LinkingTo: Rcpp
 NeedsCompilation: yes
-Packaged: 2022-04-15 21:28:04 UTC; pbailey
+Packaged: 2022-04-19 21:31:07 UTC; pbailey
 Author: Emmanuel Sikali [pdr],
   Paul Bailey [aut, cre],
   Eric Buehler [aut],

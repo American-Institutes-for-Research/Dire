@@ -63,9 +63,14 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
                                       repWeight=NULL, # replicate
                                       strataVar=NULL, PSUVar=NULL, singletonFix=c("drop", "use mean"),# Taylor
                                       ...){
+  # EdSurvey 2.7.1 compatibility
+  varType0 <- c("consistent", "robust", "cluster", "replicate", "Taylor")
+  if(length(varType) == length(varType0) && all(varType == varType0)) {
+    varType <- "Taylor"
+  }
+  varType <- match.arg(varType)
   sumCall <- match.call()
   # get varType and singletonFix cleaned up
-  varType <- match.arg(varType)
   singletonFix <- match.arg(singletonFix)
   if(is.null(strataVar)) {
     if(is.null(object$strataVar) & varType %in% c("Partial Taylor")) {
@@ -281,6 +286,13 @@ summary.mmlMeans <- function(object, gradientHessian=FALSE,
                              repWeight=NULL, # replicate
                              strataVar=NULL, PSUVar=NULL, singletonFix=c("drop", "use mean"),# Taylor
                              ...){
+  # check/fix varType argument
+  # for EdSurvey 2.7.1 compatibility
+  varType0 <- c("consistent", "robust", "cluster", "replicate", "Taylor")
+  if(length(varType) == length(varType0) && all(varType == varType0)) {
+    varType <- "Taylor"
+  }
+  varType <- match.arg(varType)
   sumCall <- match.call()
   # keep these
   latentCoef <- object$coefficients
@@ -291,8 +303,6 @@ summary.mmlMeans <- function(object, gradientHessian=FALSE,
     PSUVar <- object$PSUVar
   }
   H_B_prime <- getIHessian.mmlMeans(object, gradientHessian)
-  # check/fix varType argument
-  varType <- match.arg(varType)
   singletonFix <- match.arg(singletonFix)
   if(varType=="consistent") {
     VC <- getVarConsistent(object, H_B_prime)
