@@ -1,7 +1,7 @@
-pandoc: 2.11.4
-pkgdown: 1.6.1
+pandoc: 2.9.1.1
+pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
   MML: MML.html
-last_built: 2021-08-20T21:29Z
+last_built: 2022-04-19T21:46Z
 
