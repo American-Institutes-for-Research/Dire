@@ -26,7 +26,7 @@
 #' @param multiCore allows the \code{foreach} package to be used. You should
 #'                  have already setup the 
 #' \ifelse{latex}{the \code{registerDoParallel} function in the \code{doParallel} package}{\code{\link[doParallel]{registerDoParallel}}}.
-#' @param bobyqaControl deprecated. A list that gets passed to \ifelse{latex}{the \code{bobyqa} optimizer in \code{minqa}}{\code{\link[minqa]{bobyqa}}}
+#' @param bobyqaControl deprecated. A list that gets passed to the \code{bobyqa} optimizer in \code{minqa}
 #' @param composite a logical indicating if an overall test should be treated as
 #'                  a composite score; a composite is a weighted average of the
 #'                  subscales in it.

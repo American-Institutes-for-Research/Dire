@@ -62,7 +62,7 @@ or \code{GRM} for the Graded Response Model}
                  have already setup the 
 \ifelse{latex}{the \code{registerDoParallel} function in the \code{doParallel} package}{\code{\link[doParallel]{registerDoParallel}}}.}
 
-\item{bobyqaControl}{deprecated. A list that gets passed to \ifelse{latex}{the \code{bobyqa} optimizer in \code{minqa}}{\code{\link[minqa]{bobyqa}}}}
+\item{bobyqaControl}{deprecated. A list that gets passed to the \code{bobyqa} optimizer in \code{minqa}}
 
 \item{composite}{a logical indicating if an overall test should be treated as
 a composite score; a composite is a weighted average of the

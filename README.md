@@ -1,3 +1,13 @@
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
+
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version-ago/Dire)](https://www.r-pkg.org/badges/version-ago/Dire)
+[![CRAN weekly](https://cranlogs.r-pkg.org/badges/Dire)](https://cranlogs.r-pkg.org/badges/Dire)
+[![CRAN grand total](https://cranlogs.r-pkg.org/badges/grand-total/Dire)](https://cranlogs.r-pkg.org/badges/grand-total/Dire)
+<!-- badges: end -->
+
 # Dire
 This package implements a survey-weighted marginal maximum estimation, a type of regression where the outcome is a latent trait (such as student ability. Instead of using an estimate, the likelihood function marginalizes student ability. Includes a variety of variance estimation strategies.
 

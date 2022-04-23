@@ -1,6 +1,6 @@
 Package: Dire
-Version: 2.0.1
-Date: 2022-04-16
+Version: 2.0.2
+Date: 2022-04-21
 Title: Linear Regressions with a Latent Outcome Variable
 Authors@R: c(person("Emmanuel", "Sikali", role="pdr", email = "Emmanuel.Sikali@ed.gov"),
              person("Paul", "Bailey", role=c("aut", "cre"), email="pbailey@air.org"),
@@ -28,7 +28,7 @@ Encoding: UTF-8
 RoxygenNote: 7.1.2
 LinkingTo: Rcpp
 NeedsCompilation: yes
-Packaged: 2022-04-19 21:31:07 UTC; pbailey
+Packaged: 2022-04-23 05:26:39 UTC; pbailey
 Author: Emmanuel Sikali [pdr],
   Paul Bailey [aut, cre],
   Eric Buehler [aut],

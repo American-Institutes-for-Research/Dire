@@ -761,6 +761,12 @@ vcov.summary.mmlMeans <- function(object, ...){
   object$VC
 }
 
+#' @method vcov summary.mmlCompositeMeans
+#' @export
+vcov.summary.mmlCompositeMeans <- function(object, ...){
+  object$VC
+}
+
 #' @method vcov mmlCompositeMeans
 #' @export
 vcov.mmlCompositeMeans <- function(object, ...){
