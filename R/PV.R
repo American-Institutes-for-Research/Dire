@@ -205,8 +205,8 @@ drawPVs.mmlMeans <- function(x, npv=5L,
           # x is a summary, so grab just column 1
           beta <- x$latentCoef
         }
-        # need Sigma
-        Sigma <- x$VC
+        # need Sigma, these are scaled, but we re-scale them below. So unscale here.
+        Sigma <- x$VC/x$scale^2
         # do not randomize SD
         Sigma[nrow(Sigma), ] <- 0
         Sigma[ , nrow(Sigma)] <- 0

@@ -30,4 +30,18 @@ NumericVector multItems(NumericVector x1, NumericVector guess, NumericVector D,
   return nodesNew; 
 }
 
-
+// [[Rcpp::export]]
+double grSum2(NumericVector w, NumericMatrix trr2mxb, NumericMatrix X_, int xi, double s2, NumericVector denom){
+  // container for sum
+  double result;
+  result = 0;
+  // loop over units
+  int I = w.size();
+  // zero index xi
+  xi = xi - 1;
+  for(int i = 0; i < I; i++) {
+    result += (w(i)/denom(i)) * Rcpp::sum(trr2mxb(i,_) * X_(i, xi)/s2);
+  }
+  result = -2 * result;
+  return(result); 
+}

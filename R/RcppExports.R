@@ -25,6 +25,18 @@ multItems <- function(x1, guess, D, slope, nodes, difficulty) {
     .Call(`_Dire_multItems`, x1, guess, D, slope, nodes, difficulty)
 }
 
+grSum2 <- function(w, trr2mxb, X_, xi, s2, denom) {
+    .Call(`_Dire_grSum2`, w, trr2mxb, X_, xi, s2, denom)
+}
+
+matTimesVec <- function(mat, v) {
+    .Call(`_Dire_matTimesVec`, mat, v)
+}
+
+calcHess <- function(K, rr2, rr2_, trr2mxb, X_, nodesminusXB, w, s2, s_) {
+    .Call(`_Dire_calcHess`, K, rr2, rr2_, trr2mxb, X_, nodesminusXB, w, s2, s_)
+}
+
 calcRrij <- function(i, j, rr1fi, rr2fj, detSigma, mvnResid) {
     .Call(`_Dire_calcRrij`, i, j, rr1fi, rr2fj, detSigma, mvnResid)
 }

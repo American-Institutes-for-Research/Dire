@@ -242,6 +242,7 @@ mml <- function(formula,
       multiCore <- FALSE
     }
   }
+  
   call <- match.call()
   polyModel <- match.arg(polyModel)
   polyModel <- tolower(polyModel)
@@ -433,6 +434,7 @@ mml <- function(formula,
     colnames(wgt)[2] <- "w"
     # vcfmat is the correlation functions, just the portion above the diagonal.
     # use a list because we're storing functions
+    
     if(multiCore) {
       corm <- data.frame(i= rep(1:length(subtests), each=length(subtests)),
                          j= rep(1:length(subtests), length(subtests)))
@@ -669,6 +671,7 @@ mml <- function(formula,
   if(verbose >= 1) {
     message("Calculating likelihood function.")
   }
+  
   if(multiCore) {
     # use multiple cores to calculate rr1
     rr1 <- calcRR1_dopar(stu, Q, polyModel, paramTab, nodes, fast)
@@ -688,8 +691,10 @@ mml <- function(formula,
   if( (min(eDecomp$values) < 0) || eDecomp$values[1] / eDecomp$values[length(eDecomp$values)] > 1/.Machine$double.eps) {
     stop("Design matrix exactly singular. Adjust covariates to avoid perfect multicolinearity.")
   }
+  
   fn2 <- fn.regression(X_=X, i=NULL, wv=weightVar, rr1=rr1, nodes=nodes, stuDat=stuDat)
   opt <- robustOptim(fn2, startVal, verbose=verbose, X=X)
+  
   posteriorEsts <- fn2(opt$par, returnPosterior=TRUE)
   names(opt$par) <- c(colnames(X), "s")
   # default location and scale
@@ -896,7 +901,12 @@ robustOptim <- function(fn, X, par0=NULL, verbose=0) {
   if(verbose >= 1) {
     message("Initial optimization with Quasi-Newton.")
   }
+  #cl <- makeCluster(detectCores()-1, type="FORK")
+  #setDefaultCluster(cl=cl)
+  #opt <- optimParallel(par0, fn=fn, gr=fnDerivs$grad, method="L-BFGS-B", control=list(maxit=1e5, factr = 1e-10, trace = verbose >= 2, lmm=10, parscale=1/c(pmax(1,apply(X,2,sd)),1)))
+  # will test the entire function
   opt <- optim(par0, fn=fn, gr=fnDerivs$grad, method="L-BFGS-B", control=list(maxit=1e5, factr = 1e-10, trace = verbose >= 2, lmm=10, parscale=1/c(pmax(1,apply(X,2,sd)),1)))
+  
   # push to actual convergence
   if(verbose >= 1) {
     message("Further refining optimization with Newton's method.")

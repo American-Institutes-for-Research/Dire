@@ -6,7 +6,7 @@
 #i - list of indexes for individual likelihood (used to subset weights and r22)
 #repweightVar  - the replicate weight for replicate variance estimation
 #inside - TRUE if inside mix, otherwise linear and inside=FALSE
-fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE) {
+fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE, fast=TRUE) {
   if(length(wv) > 1) {
     stop("Must specify NULL weight or exactly one.")
   }
@@ -33,6 +33,7 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE) 
   rr1m <- (1/(.Machine$double.eps)^0.5)/apply(rr1p, 2, max) 
   rr1q <- t(t(rr1p) * rr1m) 
   insd <- inside
+
   function(par, returnPosterior=FALSE, gr=FALSE, hess=FALSE) {
     # break up par into beta and residual components
     B <- par[1:K]
@@ -44,16 +45,12 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE) 
     s2 <- max(s2, 1e-6)
     s <- sqrt(s2)
     if(hess) {
-
       # form prediction
-      XB <- X_ %*% B
+      XB <- as.vector(X_ %*% B)
       # residual, per indivudal (outer sapply), per node (inner sapply)
-      nodes.minus.XB <- t(t(matrix(nodes, nrow=length(nodes), ncol=nrow(XB))) - as.vector(XB))
+      nodes.minus.XB <- t(t(matrix(nodes, nrow=length(nodes), ncol=length(XB))) - XB)
       # likelihood of normal distribution for residuals nodes.minus.XB
       rr2 <- rr1p * ((1/(sqrt(2 * pi * s2))) * exp(-((nodes.minus.XB)^2/(2 * s2))))
-      H <- matrix(0, nrow=K+1, ncol=K+1)
-      denom <- colSums(rr2)
-      denom2 <- denom^2
       # final parameter done numerically
       par_ <- par[(K+1)] + 1e-6
       # apply non-linear transform
@@ -61,23 +58,14 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE) 
       s_ <- sqrt(s2_)
       # likelihood of normal distribution for residuals nodes.minus.XB
       rr2_ <- rr1p * ((1/(sqrt(2 * pi * s_^2))) * exp(-((nodes.minus.XB)^2/(2 * s_^2))))
-      rr2mxb <- (rr2 * nodes.minus.XB)
-      for(i in 1:K) {
-        fi <- t( t(rr2mxb) * X_[,i]/s2)
-        num <- apply(fi, 2, sum)
-        for(j in i:K) {
-          fj <- t( t(rr2mxb) * X_[,j]/s2)
-          numPrime <- apply(t(t(rr2) * X_[,i] * X_[,j] / s2) - t( t(fj * nodes.minus.XB) * X_[,i])/s2, 2, sum)
-          denomPrime <- apply(fj, 2, sum)
-          H[j,i] <- H[i,j] <- 2*sum(w*(numPrime * denom + num * denomPrime) / denom2)
-        }
-        # do numerical cross partial of variance term, taking care of the possibility of exp(x-1) transform
-        gr0 <- -2 * sum(w * apply(fi, 2, sum)/denom)
-        gr_ <- -2 * sum(w*apply( t( t((rr2_ * nodes.minus.XB)) * X_[,i]/s_^2), 2, sum)/colSums(rr2_))
-        H[K+1,i] <- H[i,K+1] <- (gr_ - gr0)/1e-6
-      }
+      trr2mxb <- t(rr2 * nodes.minus.XB)
+	    colSums_rr2 <- colSums(rr2)
+      
+      # Hess loop in rcpp
+	    H <- calcHess(K, rr2, rr2_, trr2mxb, X_, nodes.minus.XB, w, s2, s_)
+	    
       # now variance of variance term
-      gr0 <- -2*sum(w*apply( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3), 2, sum)/colSums(rr2))
+      gr0 <- -2*sum(w * colSums( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3))/colSums_rr2)
       # break up par into beta and residual components
       par_ <- par[(K+1)] + 1e-6
       if(insd) {
@@ -88,24 +76,28 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE) 
       s_ <- sqrt(s2_)
       # likelihood of normal distribution for residuals nodes.minus.XB
       rr2_ <- rr1p * ((1/(sqrt(2 * pi * s_^2))) * exp(-((nodes.minus.XB)^2/(2 * s_^2))))
-      gr_ <- -2*sum(w*apply( rr2_ * (-1/s_ + 1*(nodes.minus.XB)^2/s_^3), 2, sum)/colSums(rr2_))
+      gr_ <- -2*sum(w*colSums( rr2_ * (-1/s_ + 1*(nodes.minus.XB)^2/s_^3))/colSums(rr2_))
       H[K+1,K+1] <- (gr_ - gr0)/1e-6
       return(H)
     }
     if(gr) {
       # form prediction
-      XB <- X_ %*% B
+      XB <- as.vector(X_ %*% B)
       # residual, per indivudal (outer sapply), per node (inner sapply)
-      nodes.minus.XB <- t(t(matrix(nodes, nrow=length(nodes), ncol=nrow(XB))) - as.vector(XB))
+      nodes.minus.XB <- t(t(matrix(nodes, nrow=length(nodes), ncol=length(XB))) - XB)
       # likelihood of normal distribution for residuals nodes.minus.XB
       rr2 <- rr1p * ((1/(sqrt(2 * pi * s2))) * exp(-((nodes.minus.XB)^2/(2 * s2))))
       gr_res <- rep(0, length(par))
-      rr2mxb <- (rr2 * nodes.minus.XB)
+      trr2mxb <- t(rr2 * nodes.minus.XB)
       denom <- colSums(rr2)
       for(i in 1:K) {
-        gr_res[i] <- -2 * sum(w* apply( t( t(rr2mxb) * X_[,i] / s2), 2, sum)/denom)
+        if(fast) {
+          gr_res[i] <-  grSum2(w, trr2mxb, X_, i, s2, denom)
+        } else {
+          gr_res[i] <- -2 * sum(w * rowSums( trr2mxb * X_[,i] / s2)/denom)
+        }
       }
-      gr_res[K+1] <- -2*sum(w*apply( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3), 2, sum)/denom)
+      gr_res[K+1] <- -2* sum(w * colSums( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3))/denom)
       if(par[(K+1)] < 1) {
         gr_res[K+1] <- gr_res[K+1] * 0.5 * exp(0.5*(par[(K+1)]-1)) 
       }

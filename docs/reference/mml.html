@@ -16,7 +16,7 @@ ability. Includes a variety of variance estimation strategies."><!-- mathjax -->
     
     <a class="navbar-brand me-2" href="../index.html">Dire</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +30,7 @@ ability. Includes a variety of variance estimation strategies."><!-- mathjax -->
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/MML.html">Marginal Maximum Likelihood Regression Estimation</a>
+    <a class="dropdown-item" href="../articles/MML.html">Weighted Marginal Maximum Likelihood Regression Estimation</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -63,28 +63,28 @@ ability. Includes a variety of variance estimation strategies.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">mml</span><span class="op">(</span>
-  <span class="va">formula</span>,
-  <span class="va">stuItems</span>,
-  <span class="va">stuDat</span>,
-  <span class="va">idVar</span>,
-  dichotParamTab <span class="op">=</span> <span class="cn">NULL</span>,
-  polyParamTab <span class="op">=</span> <span class="cn">NULL</span>,
-  testScale <span class="op">=</span> <span class="cn">NULL</span>,
-  Q <span class="op">=</span> <span class="fl">30</span>,
-  minNode <span class="op">=</span> <span class="op">-</span><span class="fl">4</span>,
-  maxNode <span class="op">=</span> <span class="fl">4</span>,
-  polyModel <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GPCM"</span>, <span class="st">"GRM"</span><span class="op">)</span>,
-  weightVar <span class="op">=</span> <span class="cn">NULL</span>,
-  multiCore <span class="op">=</span> <span class="cn">FALSE</span>,
-  bobyqaControl <span class="op">=</span> <span class="cn">NULL</span>,
-  composite <span class="op">=</span> <span class="cn">TRUE</span>,
-  strataVar <span class="op">=</span> <span class="cn">NULL</span>,
-  PSUVar <span class="op">=</span> <span class="cn">NULL</span>,
-  fast <span class="op">=</span> <span class="cn">TRUE</span>,
-  calcCor <span class="op">=</span> <span class="cn">TRUE</span>,
-  verbose <span class="op">=</span> <span class="fl">0</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mml</span><span class="op">(</span></span>
+<span>  <span class="va">formula</span>,</span>
+<span>  <span class="va">stuItems</span>,</span>
+<span>  <span class="va">stuDat</span>,</span>
+<span>  <span class="va">idVar</span>,</span>
+<span>  dichotParamTab <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  polyParamTab <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  testScale <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  Q <span class="op">=</span> <span class="fl">30</span>,</span>
+<span>  minNode <span class="op">=</span> <span class="op">-</span><span class="fl">4</span>,</span>
+<span>  maxNode <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  polyModel <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GPCM"</span>, <span class="st">"GRM"</span><span class="op">)</span>,</span>
+<span>  weightVar <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  multiCore <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  bobyqaControl <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  composite <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  strataVar <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  PSUVar <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fast <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  calcCor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="fl">0</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -92,61 +92,102 @@ ability. Includes a variety of variance estimation strategies.</p>
     <dl><dt>formula</dt>
 <dd><p>a <code><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a></code>
 object in the style of <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></code></p></dd>
+
+
 <dt>stuItems</dt>
 <dd><p>a list where each element is named a student ID and contains
 a <code>data.frame</code>; see Details for the format</p></dd>
+
+
 <dt>stuDat</dt>
 <dd><p>a <code>data.frame</code> with a single row per student. Predictors in
 the <code>formula</code> must be in <code>stuDat</code>.</p></dd>
+
+
 <dt>idVar</dt>
 <dd><p>a variable name on <code>stuDat</code> that is the identifier. Every 
 ID from <code>stuDat</code> must appear on <code>stuItems</code> and vice versa.</p></dd>
+
+
 <dt>dichotParamTab</dt>
 <dd><p>a <code>data.frame</code> of dichotomous item information, see Details</p></dd>
+
+
 <dt>polyParamTab</dt>
 <dd><p>a <code>data.frame</code> of polytomous item information, see Details</p></dd>
+
+
 <dt>testScale</dt>
 <dd><p>a <code>data.frame</code> of scaling information, see Details</p></dd>
+
+
 <dt>Q</dt>
 <dd><p>an integer; the number of integration points</p></dd>
+
+
 <dt>minNode</dt>
 <dd><p>a numeric; the smallest integration point for the latent variable</p></dd>
+
+
 <dt>maxNode</dt>
 <dd><p>a numeric; the largest integration point for the latent variable</p></dd>
+
+
 <dt>polyModel</dt>
 <dd><p>polytomous response model;
 one of <code>GPCM</code> for the Graded Partial Credit Model
 or <code>GRM</code> for the Graded Response Model</p></dd>
+
+
 <dt>weightVar</dt>
 <dd><p>a variable name on <code>stuDat</code> that is the full sample weight</p></dd>
+
+
 <dt>multiCore</dt>
 <dd><p>allows the <code>foreach</code> package to be used. You should
                  have already setup the 
 <code><a href="https://rdrr.io/pkg/doParallel/man/registerDoParallel.html" class="external-link">registerDoParallel</a></code>.</p></dd>
+
+
 <dt>bobyqaControl</dt>
 <dd><p>deprecated. A list that gets passed to the <code>bobyqa</code> optimizer in <code>minqa</code></p></dd>
+
+
 <dt>composite</dt>
 <dd><p>a logical indicating if an overall test should be treated as
 a composite score; a composite is a weighted average of the
 subscales in it.</p></dd>
+
+
 <dt>strataVar</dt>
 <dd><p>character naming a variable on <code>stuDat</code>, the variable indicating the
 stratum for each row. Used in post-hoc robust variance estimation.</p></dd>
+
+
 <dt>PSUVar</dt>
 <dd><p>character naming a variable on <code>stuDat</code>; the primary sampling unit
 (PSU) variable. Used in post-hoc robust variance estimation. The values
 do not need to be unique across strata.</p></dd>
+
+
 <dt>fast</dt>
 <dd><p>a logical indicating if cpp code should be used in <code>mml</code> processes. This should 
 yield speed-ups to runs.</p></dd>
+
+
 <dt>calcCor</dt>
 <dd><p>set to <code>TRUE</code> to calculate covariances. Needed to estimate variances and form plausible values</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>integer, negative or zero for no details, increasingly verbose messages at one and two</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>When called for a single subscale or overall score, returns object of class <code>mmlMeans</code>. 
+    
+
+<p>When called for a single subscale or overall score, returns object of class <code>mmlMeans</code>. 
 This is a list with elements:</p><ul><li><p><code>call</code> the call used to generate this <code>mml.means</code> object</p></li>
 <li><p><code>coefficients</code> the unscaled marginal maximum likelihood regression coefficients</p></li>
 <li><p><code>LogLik</code> the log-likelihood of the fit model</p></li>
@@ -293,135 +334,135 @@ with a total of <code>Q</code> nodes.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://www.air.org/project/nces-data-r-project-edsurvey" class="external-link">EdSurvey</a></span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># 1) make param tab for dichotomous items</span></span>
-<span class="r-in"><span class="va">dichotParamTab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>ItemID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m109801"</span>, <span class="st">"m020001"</span>, <span class="st">"m111001"</span>,</span>
-<span class="r-in">                                        <span class="st">"m046301"</span>, <span class="st">"m046501"</span>, <span class="st">"m051501"</span>,</span>
-<span class="r-in">                                        <span class="st">"m111601"</span>, <span class="st">"m111301"</span>, <span class="st">"m111201"</span>,</span>
-<span class="r-in">                                        <span class="st">"m110801"</span>, <span class="st">"m110101"</span><span class="op">)</span>,</span>
-<span class="r-in">                             test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"composite"</span>,<span class="fl">11</span><span class="op">)</span>,</span>
-<span class="r-in">                             subtest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"num"</span>,<span class="fl">6</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"alg"</span>,<span class="fl">5</span><span class="op">)</span><span class="op">)</span>,</span>
-<span class="r-in">                             slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.96</span>, <span class="fl">0.69</span>, <span class="fl">0.83</span>,</span>
-<span class="r-in">                                       <span class="fl">0.99</span>, <span class="fl">1.03</span>, <span class="fl">0.97</span>,</span>
-<span class="r-in">                                       <span class="fl">1.45</span>, <span class="fl">0.59</span>, <span class="fl">0.34</span>,</span>
-<span class="r-in">                                       <span class="fl">0.18</span>, <span class="fl">1.20</span><span class="op">)</span>,</span>
-<span class="r-in">                             difficulty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.37</span>, <span class="op">-</span><span class="fl">0.55</span>,  <span class="fl">0.85</span>,</span>
-<span class="r-in">                                            <span class="op">-</span><span class="fl">0.97</span>, <span class="op">-</span><span class="fl">0.14</span>,  <span class="fl">1.21</span>,</span>
-<span class="r-in">                                             <span class="fl">0.53</span>, <span class="op">-</span><span class="fl">1.84</span>, <span class="op">-</span><span class="fl">0.46</span>,</span>
-<span class="r-in">                                             <span class="fl">2.43</span>,  <span class="fl">0.70</span><span class="op">)</span>,</span>
-<span class="r-in">                             guessing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.16</span>, <span class="fl">0.00</span>, <span class="fl">0.17</span>,</span>
-<span class="r-in">                                          <span class="fl">0.31</span>, <span class="fl">0.37</span>, <span class="fl">0.18</span>,</span>
-<span class="r-in">                                          <span class="fl">0.28</span>, <span class="fl">0.15</span>, <span class="fl">0.09</span>,</span>
-<span class="r-in">                                          <span class="fl">0.05</span>, <span class="fl">0.18</span><span class="op">)</span>,</span>
-<span class="r-in">                             D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1.7</span>, <span class="fl">11</span><span class="op">)</span>,</span>
-<span class="r-in">                             MODEL <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"3pl"</span>, <span class="fl">11</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># param tab for GPCM items</span></span>
-<span class="r-in"><span class="va">polyParamTab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>ItemID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m0757cl"</span>, <span class="st">"m066501"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span class="r-in">                           test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"composite"</span>,<span class="fl">2</span><span class="op">)</span>,</span>
-<span class="r-in">                           subtest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"alg"</span>,<span class="fl">2</span><span class="op">)</span>,</span>
-<span class="r-in">                           slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.43</span>, <span class="fl">0.52</span><span class="op">)</span>, <span class="co"># could also be called "a"</span></span>
-<span class="r-in">                           itemLocation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.21</span>, <span class="op">-</span><span class="fl">0.96</span><span class="op">)</span>, <span class="co"># added to d1 ... dn</span></span>
-<span class="r-in">                           d1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.38</span>, <span class="op">-</span><span class="fl">0.56</span><span class="op">)</span>, </span>
-<span class="r-in">                           d2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.57</span>, <span class="fl">0.56</span><span class="op">)</span>,</span>
-<span class="r-in">                           d3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.18</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
-<span class="r-in">                           D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.7</span>, <span class="fl">1.7</span><span class="op">)</span>,</span>
-<span class="r-in">                           scorePoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4L</span>, <span class="fl">3L</span><span class="op">)</span><span class="op">)</span> <span class="co"># number of score points, read d1 to d(n-1)</span></span>
-<span class="r-in"><span class="co"># read-in NAEP Primer data </span></span>
-<span class="r-in"><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/EdSurvey/man/readNAEP.html" class="external-link">readNAEP</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/data"</span>, <span class="st">"M36NT2PM.dat"</span>, package <span class="op">=</span> <span class="st">"NAEPprimer"</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># read in these items</span></span>
-<span class="r-in"><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">dichotParamTab</span><span class="op">$</span><span class="va">ItemID</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">polyParamTab</span><span class="op">$</span><span class="va">ItemID</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># dsex, student sex</span></span>
-<span class="r-in"><span class="co"># origwt, full sample weights</span></span>
-<span class="r-in"><span class="co"># repgrp1, stratum indicator</span></span>
-<span class="r-in"><span class="co"># jkunit, PSU indicator</span></span>
-<span class="r-in"><span class="va">edf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/EdSurvey/man/getData.html" class="external-link">getData</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">sdf</span>, varnames<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">items</span>, <span class="st">"dsex"</span>, <span class="st">"origwt"</span>, <span class="st">"repgrp1"</span>, <span class="st">"jkunit"</span>, <span class="st">"sdracem"</span><span class="op">)</span>,</span>
-<span class="r-in">               omittedLevels <span class="op">=</span> <span class="cn">FALSE</span>, returnJKreplicates<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># make up a student ID</span></span>
-<span class="r-in"><span class="va">edf</span><span class="op">$</span><span class="va">sid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"S"</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">edf</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># apply simplified scoring</span></span>
-<span class="r-in"><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in">  <span class="va">coli</span> <span class="op">&lt;-</span> <span class="va">items</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span class="r-in">  <span class="co"># save the original</span></span>
-<span class="r-in">  <span class="va">rawcol</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">coli</span>,<span class="st">"raw"</span><span class="op">)</span></span>
-<span class="r-in">  <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span></span>
-<span class="r-in">  <span class="kw">if</span><span class="op">(</span> <span class="va">coli</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">dichotParamTab</span><span class="op">$</span><span class="va">ItemID</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"[ABCDE]"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">0</span>, <span class="cn">NA</span><span class="op">)</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"*"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-in">  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span class="r-in">    <span class="co"># scale for m066501</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Incorrect"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">0</span>, <span class="cn">NA</span><span class="op">)</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Partial"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">2</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-in">    <span class="co"># scale for m0757cl</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"None correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">0</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"One correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Two correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">2</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-in">    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Three correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">3</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-in">  <span class="op">}</span></span>
-<span class="r-in">  <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NULL</span> <span class="co"># delete original</span></span>
-<span class="r-in"><span class="op">}</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># stuItems has one row per student/item combination</span></span>
-<span class="r-in"><span class="va">stuItems</span> <span class="op">&lt;-</span> <span class="va">edf</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sid"</span>, <span class="va">items</span><span class="op">)</span><span class="op">]</span></span>
-<span class="r-in"><span class="va">stuItems</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/reshape.html" class="external-link">reshape</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">stuItems</span>, varying<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span>, idvar<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sid"</span><span class="op">)</span>,</span>
-<span class="r-in">                    direction<span class="op">=</span><span class="st">"long"</span>, v.names<span class="op">=</span><span class="st">"score"</span>, times<span class="op">=</span><span class="va">items</span>, timevar<span class="op">=</span><span class="st">"key"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># stuDat is one row per student an contains student-level information</span></span>
-<span class="r-in"><span class="va">stuDat</span> <span class="op">&lt;-</span> <span class="va">edf</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sid"</span>, <span class="st">"origwt"</span>, <span class="st">"repgrp1"</span>, <span class="st">"jkunit"</span>, <span class="st">"dsex"</span>, <span class="st">"sdracem"</span><span class="op">)</span><span class="op">]</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># testDat shows scaling and weights for subtests, an overall score can be treated as a subtest</span></span>
-<span class="r-in"><span class="va">testDat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>test<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"composite"</span>, <span class="st">"composite"</span><span class="op">)</span> ,</span>
-<span class="r-in">                      subtest<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"num"</span>, <span class="st">"alg"</span><span class="op">)</span>,</span>
-<span class="r-in">                      location<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">277.1563</span>, <span class="fl">280.2948</span><span class="op">)</span>,</span>
-<span class="r-in">                      scale<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">37.7297</span>, <span class="fl">36.3887</span><span class="op">)</span>,</span>
-<span class="r-in">                      subtestWeight<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>,<span class="fl">0.7</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># estimate a regression for Algebra subscale</span></span>
-<span class="r-in"><span class="va">mmlA</span> <span class="op">&lt;-</span> <span class="fu">mml</span><span class="op">(</span><span class="va">alg</span> <span class="op">~</span> <span class="va">dsex</span>,</span>
-<span class="r-in">            stuItems<span class="op">=</span><span class="va">stuItems</span>, stuDat<span class="op">=</span><span class="va">stuDat</span>,</span>
-<span class="r-in">            dichotParamTab<span class="op">=</span><span class="va">dichotParamTab</span>, polyParamTab<span class="op">=</span><span class="va">polyParamTab</span>,</span>
-<span class="r-in">            testScale<span class="op">=</span><span class="va">testDat</span>,</span>
-<span class="r-in">            idVar<span class="op">=</span><span class="st">"sid"</span>, weightVar<span class="op">=</span><span class="st">"origwt"</span>, <span class="co"># these are column names on stuDat</span></span>
-<span class="r-in">            strataVar<span class="op">=</span><span class="st">"repgrp1"</span>, PSUVar<span class="op">=</span><span class="st">"jkunit"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># summary, with Taylor standard errors</span></span>
-<span class="r-in"><span class="va">mmlAs</span> <span class="op">&lt;-</span> <span class="fu">summary.mmlMeans</span><span class="op">(</span><span class="va">mmlA</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># estimate a regression for Numeracy subscale</span></span>
-<span class="r-in"><span class="va">mmlN</span> <span class="op">&lt;-</span> <span class="fu">mml</span><span class="op">(</span><span class="va">num</span> <span class="op">~</span> <span class="va">dsex</span>,</span>
-<span class="r-in">            stuItems<span class="op">=</span><span class="va">stuItems</span>, stuDat<span class="op">=</span><span class="va">stuDat</span>,</span>
-<span class="r-in">            dichotParamTab<span class="op">=</span><span class="va">dichotParamTab</span>, polyParamTab<span class="op">=</span><span class="va">polyParamTab</span>,</span>
-<span class="r-in">            testScale<span class="op">=</span><span class="va">testDat</span>,</span>
-<span class="r-in">            idVar<span class="op">=</span><span class="st">"sid"</span>, weightVar<span class="op">=</span><span class="st">"origwt"</span>, <span class="co"># these are column names on stuDat</span></span>
-<span class="r-in">            strataVar<span class="op">=</span><span class="st">"repgrp1"</span>, PSUVar<span class="op">=</span><span class="st">"jkunit"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># summary, with Taylor standard errors</span></span>
-<span class="r-in"><span class="va">mmlNs</span> <span class="op">&lt;-</span> <span class="fu">summary.mmlMeans</span><span class="op">(</span><span class="va">mmlN</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">mmlNs</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># draw plausible values for mmlA</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvd</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlMeans</a></span><span class="op">(</span><span class="va">mmlA</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># alternative specification</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvs</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlMeans</a></span><span class="op">(</span><span class="fu">summary.mmlMeans</span><span class="op">(</span><span class="va">mmlA</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span>, stochasticBeta<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># composite regression </span></span>
-<span class="r-in"><span class="va">mmlC</span> <span class="op">&lt;-</span> <span class="fu">mml</span><span class="op">(</span><span class="va">composite</span> <span class="op">~</span> <span class="va">dsex</span> ,</span>
-<span class="r-in">            stuItems<span class="op">=</span><span class="va">stuItems</span>, stuDat<span class="op">=</span><span class="va">stuDat</span>,</span>
-<span class="r-in">            dichotParamTab<span class="op">=</span><span class="va">dichotParamTab</span>, polyParamTab<span class="op">=</span><span class="va">polyParamTab</span>,</span>
-<span class="r-in">            testScale<span class="op">=</span><span class="va">testDat</span>,</span>
-<span class="r-in">            idVar<span class="op">=</span><span class="st">"sid"</span>, weightVar<span class="op">=</span><span class="st">"origwt"</span>, <span class="co"># these are column names on stuDat</span></span>
-<span class="r-in">            strataVar<span class="op">=</span><span class="st">"repgrp1"</span>, PSUVar<span class="op">=</span><span class="st">"jkunit"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># summary, with Taylor standard errors</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mmlC</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># draw plausible values for mmlC</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvd</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlCompositeMeans</a></span><span class="op">(</span><span class="va">mmlC</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># alternative specification </span></span>
-<span class="r-in"><span class="va">mmlCsum</span> <span class="op">&lt;-</span> <span class="fu">summary.mmlCompositeMeans</span><span class="op">(</span><span class="va">mmlC</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvs</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlCompositeMeans</a></span><span class="op">(</span><span class="va">mmlCsum</span>, stochasticBeta<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="op">}</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://www.air.org/project/nces-data-r-project-edsurvey" class="external-link">EdSurvey</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 1) make param tab for dichotomous items</span></span></span>
+<span class="r-in"><span><span class="va">dichotParamTab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>ItemID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m109801"</span>, <span class="st">"m020001"</span>, <span class="st">"m111001"</span>,</span></span>
+<span class="r-in"><span>                                        <span class="st">"m046301"</span>, <span class="st">"m046501"</span>, <span class="st">"m051501"</span>,</span></span>
+<span class="r-in"><span>                                        <span class="st">"m111601"</span>, <span class="st">"m111301"</span>, <span class="st">"m111201"</span>,</span></span>
+<span class="r-in"><span>                                        <span class="st">"m110801"</span>, <span class="st">"m110101"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"composite"</span>,<span class="fl">11</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             subtest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"num"</span>,<span class="fl">6</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"alg"</span>,<span class="fl">5</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.96</span>, <span class="fl">0.69</span>, <span class="fl">0.83</span>,</span></span>
+<span class="r-in"><span>                                       <span class="fl">0.99</span>, <span class="fl">1.03</span>, <span class="fl">0.97</span>,</span></span>
+<span class="r-in"><span>                                       <span class="fl">1.45</span>, <span class="fl">0.59</span>, <span class="fl">0.34</span>,</span></span>
+<span class="r-in"><span>                                       <span class="fl">0.18</span>, <span class="fl">1.20</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             difficulty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.37</span>, <span class="op">-</span><span class="fl">0.55</span>,  <span class="fl">0.85</span>,</span></span>
+<span class="r-in"><span>                                            <span class="op">-</span><span class="fl">0.97</span>, <span class="op">-</span><span class="fl">0.14</span>,  <span class="fl">1.21</span>,</span></span>
+<span class="r-in"><span>                                             <span class="fl">0.53</span>, <span class="op">-</span><span class="fl">1.84</span>, <span class="op">-</span><span class="fl">0.46</span>,</span></span>
+<span class="r-in"><span>                                             <span class="fl">2.43</span>,  <span class="fl">0.70</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             guessing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.16</span>, <span class="fl">0.00</span>, <span class="fl">0.17</span>,</span></span>
+<span class="r-in"><span>                                          <span class="fl">0.31</span>, <span class="fl">0.37</span>, <span class="fl">0.18</span>,</span></span>
+<span class="r-in"><span>                                          <span class="fl">0.28</span>, <span class="fl">0.15</span>, <span class="fl">0.09</span>,</span></span>
+<span class="r-in"><span>                                          <span class="fl">0.05</span>, <span class="fl">0.18</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1.7</span>, <span class="fl">11</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             MODEL <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"3pl"</span>, <span class="fl">11</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># param tab for GPCM items</span></span></span>
+<span class="r-in"><span><span class="va">polyParamTab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>ItemID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m0757cl"</span>, <span class="st">"m066501"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"composite"</span>,<span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           subtest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"alg"</span>,<span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.43</span>, <span class="fl">0.52</span><span class="op">)</span>, <span class="co"># could also be called "a"</span></span></span>
+<span class="r-in"><span>                           itemLocation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.21</span>, <span class="op">-</span><span class="fl">0.96</span><span class="op">)</span>, <span class="co"># added to d1 ... dn</span></span></span>
+<span class="r-in"><span>                           d1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.38</span>, <span class="op">-</span><span class="fl">0.56</span><span class="op">)</span>, </span></span>
+<span class="r-in"><span>                           d2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.57</span>, <span class="fl">0.56</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           d3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.18</span>, <span class="cn">NA</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.7</span>, <span class="fl">1.7</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           scorePoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4L</span>, <span class="fl">3L</span><span class="op">)</span><span class="op">)</span> <span class="co"># number of score points, read d1 to d(n-1)</span></span></span>
+<span class="r-in"><span><span class="co"># read-in NAEP Primer data </span></span></span>
+<span class="r-in"><span><span class="va">sdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/EdSurvey/man/readNAEP.html" class="external-link">readNAEP</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/data"</span>, <span class="st">"M36NT2PM.dat"</span>, package <span class="op">=</span> <span class="st">"NAEPprimer"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># read in these items</span></span></span>
+<span class="r-in"><span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">dichotParamTab</span><span class="op">$</span><span class="va">ItemID</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">polyParamTab</span><span class="op">$</span><span class="va">ItemID</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># dsex, student sex</span></span></span>
+<span class="r-in"><span><span class="co"># origwt, full sample weights</span></span></span>
+<span class="r-in"><span><span class="co"># repgrp1, stratum indicator</span></span></span>
+<span class="r-in"><span><span class="co"># jkunit, PSU indicator</span></span></span>
+<span class="r-in"><span><span class="va">edf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/EdSurvey/man/getData.html" class="external-link">getData</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">sdf</span>, varnames<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">items</span>, <span class="st">"dsex"</span>, <span class="st">"origwt"</span>, <span class="st">"repgrp1"</span>, <span class="st">"jkunit"</span>, <span class="st">"sdracem"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>               omittedLevels <span class="op">=</span> <span class="cn">FALSE</span>, returnJKreplicates<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># make up a student ID</span></span></span>
+<span class="r-in"><span><span class="va">edf</span><span class="op">$</span><span class="va">sid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"S"</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">edf</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># apply simplified scoring</span></span></span>
+<span class="r-in"><span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">coli</span> <span class="op">&lt;-</span> <span class="va">items</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span></span>
+<span class="r-in"><span>  <span class="co"># save the original</span></span></span>
+<span class="r-in"><span>  <span class="va">rawcol</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">coli</span>,<span class="st">"raw"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span><span class="op">(</span> <span class="va">coli</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">dichotParamTab</span><span class="op">$</span><span class="va">ItemID</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"[ABCDE]"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">0</span>, <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"*"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="co"># scale for m066501</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Incorrect"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">0</span>, <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Partial"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">2</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="co"># scale for m0757cl</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"None correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">0</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"One correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Two correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">2</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Three correct"</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span><span class="op">)</span>, <span class="fl">3</span>, <span class="va">edf</span><span class="op">[</span>,<span class="va">coli</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
+<span class="r-in"><span>  <span class="va">edf</span><span class="op">[</span>,<span class="va">rawcol</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NULL</span> <span class="co"># delete original</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># stuItems has one row per student/item combination</span></span></span>
+<span class="r-in"><span><span class="va">stuItems</span> <span class="op">&lt;-</span> <span class="va">edf</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sid"</span>, <span class="va">items</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">stuItems</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/reshape.html" class="external-link">reshape</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">stuItems</span>, varying<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span>, idvar<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sid"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                    direction<span class="op">=</span><span class="st">"long"</span>, v.names<span class="op">=</span><span class="st">"score"</span>, times<span class="op">=</span><span class="va">items</span>, timevar<span class="op">=</span><span class="st">"key"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># stuDat is one row per student an contains student-level information</span></span></span>
+<span class="r-in"><span><span class="va">stuDat</span> <span class="op">&lt;-</span> <span class="va">edf</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sid"</span>, <span class="st">"origwt"</span>, <span class="st">"repgrp1"</span>, <span class="st">"jkunit"</span>, <span class="st">"dsex"</span>, <span class="st">"sdracem"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># testDat shows scaling and weights for subtests, an overall score can be treated as a subtest</span></span></span>
+<span class="r-in"><span><span class="va">testDat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>test<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"composite"</span>, <span class="st">"composite"</span><span class="op">)</span> ,</span></span>
+<span class="r-in"><span>                      subtest<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"num"</span>, <span class="st">"alg"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                      location<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">277.1563</span>, <span class="fl">280.2948</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                      scale<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">37.7297</span>, <span class="fl">36.3887</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                      subtestWeight<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>,<span class="fl">0.7</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># estimate a regression for Algebra subscale</span></span></span>
+<span class="r-in"><span><span class="va">mmlA</span> <span class="op">&lt;-</span> <span class="fu">mml</span><span class="op">(</span><span class="va">alg</span> <span class="op">~</span> <span class="va">dsex</span>,</span></span>
+<span class="r-in"><span>            stuItems<span class="op">=</span><span class="va">stuItems</span>, stuDat<span class="op">=</span><span class="va">stuDat</span>,</span></span>
+<span class="r-in"><span>            dichotParamTab<span class="op">=</span><span class="va">dichotParamTab</span>, polyParamTab<span class="op">=</span><span class="va">polyParamTab</span>,</span></span>
+<span class="r-in"><span>            testScale<span class="op">=</span><span class="va">testDat</span>,</span></span>
+<span class="r-in"><span>            idVar<span class="op">=</span><span class="st">"sid"</span>, weightVar<span class="op">=</span><span class="st">"origwt"</span>, <span class="co"># these are column names on stuDat</span></span></span>
+<span class="r-in"><span>            strataVar<span class="op">=</span><span class="st">"repgrp1"</span>, PSUVar<span class="op">=</span><span class="st">"jkunit"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># summary, with Taylor standard errors</span></span></span>
+<span class="r-in"><span><span class="va">mmlAs</span> <span class="op">&lt;-</span> <span class="fu">summary.mmlMeans</span><span class="op">(</span><span class="va">mmlA</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># estimate a regression for Numeracy subscale</span></span></span>
+<span class="r-in"><span><span class="va">mmlN</span> <span class="op">&lt;-</span> <span class="fu">mml</span><span class="op">(</span><span class="va">num</span> <span class="op">~</span> <span class="va">dsex</span>,</span></span>
+<span class="r-in"><span>            stuItems<span class="op">=</span><span class="va">stuItems</span>, stuDat<span class="op">=</span><span class="va">stuDat</span>,</span></span>
+<span class="r-in"><span>            dichotParamTab<span class="op">=</span><span class="va">dichotParamTab</span>, polyParamTab<span class="op">=</span><span class="va">polyParamTab</span>,</span></span>
+<span class="r-in"><span>            testScale<span class="op">=</span><span class="va">testDat</span>,</span></span>
+<span class="r-in"><span>            idVar<span class="op">=</span><span class="st">"sid"</span>, weightVar<span class="op">=</span><span class="st">"origwt"</span>, <span class="co"># these are column names on stuDat</span></span></span>
+<span class="r-in"><span>            strataVar<span class="op">=</span><span class="st">"repgrp1"</span>, PSUVar<span class="op">=</span><span class="st">"jkunit"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># summary, with Taylor standard errors</span></span></span>
+<span class="r-in"><span><span class="va">mmlNs</span> <span class="op">&lt;-</span> <span class="fu">summary.mmlMeans</span><span class="op">(</span><span class="va">mmlN</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mmlNs</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># draw plausible values for mmlA</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvd</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlMeans</a></span><span class="op">(</span><span class="va">mmlA</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># alternative specification</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvs</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlMeans</a></span><span class="op">(</span><span class="fu">summary.mmlMeans</span><span class="op">(</span><span class="va">mmlA</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span>, stochasticBeta<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># composite regression </span></span></span>
+<span class="r-in"><span><span class="va">mmlC</span> <span class="op">&lt;-</span> <span class="fu">mml</span><span class="op">(</span><span class="va">composite</span> <span class="op">~</span> <span class="va">dsex</span> ,</span></span>
+<span class="r-in"><span>            stuItems<span class="op">=</span><span class="va">stuItems</span>, stuDat<span class="op">=</span><span class="va">stuDat</span>,</span></span>
+<span class="r-in"><span>            dichotParamTab<span class="op">=</span><span class="va">dichotParamTab</span>, polyParamTab<span class="op">=</span><span class="va">polyParamTab</span>,</span></span>
+<span class="r-in"><span>            testScale<span class="op">=</span><span class="va">testDat</span>,</span></span>
+<span class="r-in"><span>            idVar<span class="op">=</span><span class="st">"sid"</span>, weightVar<span class="op">=</span><span class="st">"origwt"</span>, <span class="co"># these are column names on stuDat</span></span></span>
+<span class="r-in"><span>            strataVar<span class="op">=</span><span class="st">"repgrp1"</span>, PSUVar<span class="op">=</span><span class="st">"jkunit"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># summary, with Taylor standard errors</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mmlC</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># draw plausible values for mmlC</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvd</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlCompositeMeans</a></span><span class="op">(</span><span class="va">mmlC</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># alternative specification </span></span></span>
+<span class="r-in"><span><span class="va">mmlCsum</span> <span class="op">&lt;-</span> <span class="fu">summary.mmlCompositeMeans</span><span class="op">(</span><span class="va">mmlC</span>, varType<span class="op">=</span><span class="st">"Taylor"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pvs</span> <span class="op">&lt;-</span> <span class="fu"><a href="drawPVs.html">drawPVs.mmlCompositeMeans</a></span><span class="op">(</span><span class="va">mmlCsum</span>, stochasticBeta<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -433,7 +474,7 @@ with a total of <code>Q</code> nodes.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
     </footer></div>
