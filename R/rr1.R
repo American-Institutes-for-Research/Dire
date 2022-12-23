@@ -85,6 +85,9 @@ calcRR1 <- function(stu, Q, model, paramTab, nodes, fast) {
       return(rep(1, Q))
     }
     # subset to items this student was shown
+    if(any(duplicated(dopari$key))) {
+      stop(paste0("person ", dQuote(dopari[1,1]), " has duplicated items: ", paste(dopari$key[duplicated(dopari$key)], collapse=", ")))
+    }
     paramTab <- paramTab[paramTab$ItemID %in% dopari$key,]
     ind.dichot <- which(paramTab$scorePoints == 1)
     dParams <- paramTab[ind.dichot,]

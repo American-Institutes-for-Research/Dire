@@ -187,7 +187,7 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
       Vi[[i]] <- Vii$vec
       dof <- min(dof, Vii$simple_dof)
     }
-    dof <- rep(dof, nrow(object$coef))
+    dof <- rep(dof, ncol(object$coef))
     str <- lapply(1:length(Vi[[1]]), function(strati) {
       lapply(1:length(Vi[[1]][[strati]]), function(psui) {
         res <- c()

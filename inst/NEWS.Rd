@@ -1,7 +1,16 @@
 \name{NEWS}
 \title{NEWS for Dire}
 
-\section{Changes in version 2.0.0}{
+\section{Changes in version 2.1.1}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Fixed bug in degrees of freedom replication in composite
+      \item Fixed version number error in this file. 2.1.0 changes had previously been named 2.0.0.
+    }
+  }
+}
+
+\section{Changes in version 2.1.0}{
   \subsection{New features}{
     \itemize{
       \item Added degrees of freedom and p-values to \code{mml} results

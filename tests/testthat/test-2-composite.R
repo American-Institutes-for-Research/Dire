@@ -112,13 +112,16 @@ test_that("composite with regressors", {
   # non-composite but named composite; treated as "overall"
   testDat <- data.frame(test=c("composite", "composite", "composite"),
              subtest=c(2,3, NA),
-             location=c(277.1563,278, 200),
-             scale=c(37.7297, 38, 90),
+             location=c(277.1563,278, 278),
+             scale=c(37.7297, 38, 38),
              subtestWeight=c(0.3,0.7, NA))
 
   mml3 <- mml(composite~x1,stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, weightVar="origwt", composite=FALSE, strataVar="repgrp1", PSUVar="jkunit", minNode=-5, maxNode=5)
-
   mml3T <- summary(mml3, varType="Taylor", gradientHessian=TRUE)
+
+
+  mml3c <- mml(composite~x1,stuItems=stuItems, stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat, weightVar="origwt", composite=TRUE, strataVar="repgrp1", PSUVar="jkunit", minNode=-5, maxNode=5)
+  mml3cT <- summary(mml3c, varType="Taylor", gradientHessian=TRUE)
 
   # Iterations: 21 
   # Log Likelihood: -87057.6
@@ -136,12 +139,16 @@ test_that("composite with regressors", {
 
   # AM results:
   expect_equal(mml3T$coef[,1],
-                 c(`(Intercept)` = 199.11432422, x1 = 23.65037709, `Population SD` = 88.22756305),
+                 c(`(Intercept)` = 277.626052117303, x1 = 9.98571505425182, `Population SD` = 37.2516385710825),
                  tolerance=1e-5)
 
   expect_equal(mml3T$coef[,2], # check estimates
-                 c(`(Intercept)` = 5.14372445, x1 = 9.19983795, `Population SD` = 2.54241308),
+                 c(`(Intercept)` = 2.17194822389352, x1 = 3.88465057751056, `Population SD` = 1.07353915893749),
                  tolerance=1e-4)
+
+  expect_equal(mml3T$coef[,1], mml3cT$coef[,1], tol=0.02)
+  expect_equal(mml3T$coef[1:2,2], mml3cT$coef[1:2,2], tol=0.1)
+
 })
 
 # PV generation
