@@ -62,8 +62,14 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE, 
 	    colSums_rr2 <- colSums(rr2)
       
       # Hess loop in rcpp
-	    H <- calcHess(K, rr2, rr2_, trr2mxb, X_, nodes.minus.XB, w, s2, s_)
-	    
+      if(fast) {
+        H <- calcHess(K, rr2, rr2_, trr2mxb, X_, nodes.minus.XB, w, s2, s_)
+        if(any(H %in% c(NA, NaN, Inf, -Inf))) {
+          H <- slowHess(K, rr2, rr2_, trr2mxb, X_, nodes.minus.XB, w, s2, s_)
+        }
+      } else {
+        H <- slowHess(K, rr2, rr2_, trr2mxb, X_, nodes.minus.XB, w, s2, s_)
+      }
       # now variance of variance term
       gr0 <- -2*sum(w * colSums( rr2 * (-1/s + 1*(nodes.minus.XB)^2/s^3))/colSums_rr2)
       # break up par into beta and residual components
@@ -93,6 +99,9 @@ fn.regression <- function(X_, i=NULL, wv=NULL, rr1, stuDat, nodes, inside=TRUE, 
       for(i in 1:K) {
         if(fast) {
           gr_res[i] <-  grSum2(w, trr2mxb, X_, i, s2, denom)
+          if(gr_res[i] %in% c(NA, Inf, -Inf, NaN)) {
+            gr_res[i] <- -2 * sum(w * rowSums( trr2mxb * X_[,i] / s2)/denom)
+          }
         } else {
           gr_res[i] <- -2 * sum(w * rowSums( trr2mxb * X_[,i] / s2)/denom)
         }
@@ -459,4 +468,26 @@ grmLikelihood <- function (theta, d, score, a, D=1.7) {
     pr <- 1/(1 + exp(D*a*(theta - d[(score+1)]))) - 1/(1 + exp(D*a*(theta - d[score])))
   }
   pr
+}
+
+slowHess <- function(K, rr2, rr2_, trr2mxb, X_, nodes.minus.XB, w, s2, s_) {
+  colSums_rr2_ <- colSums(rr2_)
+  H <- matrix(0, nrow=K+1, ncol=K+1)
+  denom <- colSums(rr2)
+  denom2 <- denom^2
+  for(i in 1:K) {
+    fi <- t( trr2mxb * X_[,i]/s2)
+    num <- colSums(fi)
+    for(j in i:K) {
+      fj <- t( trr2mxb * X_[,j]/s2)
+      numPrime <- colSums(t(t(rr2) * X_[,i] * X_[,j] / s2) - t( t(fj * nodes.minus.XB) * X_[,i])/s2)
+      denomPrime <- colSums(fj)
+      H[j,i] <- H[i,j] <- 2*sum(w*(numPrime * denom + num * denomPrime) / denom2)
+    }
+    # do numerical cross partial of variance term, taking care of the possibility of exp(x-1) transform
+    gr0 <- -2 * sum(w * colSums(fi)/denom)
+    gr_ <- -2 * sum(w * colSums( t( t((rr2_ * nodes.minus.XB)) * X_[,i]/s_^2))/colSums_rr2_)
+    H[K+1,i] <- H[i, K+1] <- (gr_ - gr0)/1e-6
+  }
+  return(H)
 }

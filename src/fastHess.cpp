@@ -4,7 +4,7 @@ using namespace Rcpp;
 // https://stackoverflow.com/questions/68351041/how-can-i-replicate-rs-functionality-with-multiplying-a-matrix-by-a-vector-elem
 // [[Rcpp::export]] 
 arma::mat matTimesVec(arma::mat mat, arma::vec v) {
-  for(int i = 0; i < mat.n_cols; i++){
+  for(int i = 0; (unsigned)i < mat.n_cols; i++){
     mat.col(i)  %=  v;
   }
   return mat;

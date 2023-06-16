@@ -7,8 +7,11 @@
 #' 
 #' @param formula  a \ifelse{latex}{\code{formula}}{\code{\link[stats]{formula}}}
 #'                 object in the style of \ifelse{latex}{\code{lm}}{\code{\link[stats]{lm}}}
-#' @param stuItems a list where each element is named a student ID and contains
-#'                 a \code{data.frame}; see Details for the format
+#' @param stuItems a \code{data.frame} where each row represents a single student's response to one item.
+#'                 The columns must include the \code{idVar} column, a \code{key} column, and a
+#'                 \code{score} column. Values in the \code{score} column are checked against expectations
+#'                 (based on \code{dichotParamTab} and \code{polyParamTab}) and when
+#'                 \code{verbose} is >= 1 a table of expected and actual levels is printed.
 #' @param stuDat   a \code{data.frame} with a single row per student. Predictors in
 #'                 the \code{formula} must be in \code{stuDat}.
 #' @param dichotParamTab a \code{data.frame} of dichotomous item information, see Details
@@ -89,7 +92,7 @@
 #' \code{itemLocation} by simply adding that to every \code{d*} column. Items
 #' are not included in the likelihood for an individual when their value on \code{stuItems}
 #' is \code{NA}, but no provision is made for guessing, nor special provision for 
-#' missing codes in polytimious items.
+#' missing codes in polytomous items.
 #' 
 #' For both \code{dichotParamTab} and \code{polyParamTab} users wishing
 #' to use a \code{D} paramter of 1.7 (or any other value) may specify that, per item,
@@ -265,27 +268,8 @@ mml <- function(formula,
   pptd <- cleanPolyParamTab(polyParamTab)
   paramTab <- condenseParamTab(dichotParamTab, pptd$polyParamTab, pptd$dvars)
   
-  # make sure every stuItems student has a stuDat student, and the other way around
-  if(!is.data.frame(stuItems)) {
-    stuItems <- do.call(rbind, stuItems)
-  }
-  if(length(class(stuItems))>1) {
-    # not all data.frames are the same, recast
-    stuItems <- as.data.frame(stuItems)
-  }
-  if(any(!stuItems[[idVar]] %in% stuDat[[idVar]])) {
-    missing <- (stuItems[[idVar]])[!(stuItems[[idVar]]) %in% stuDat[[idVar]]]
-    stop(paste0("The ", dQuote("stuItems"), " argument must be a list with names that correspond to every " , dQuote("idVar"), " in ", dQuote("stuDat"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "."))
-  }
-  if(any(!stuDat[[idVar]] %in% stuItems[[idVar]])) {
-    missing <- stuDat[[idVar]][!stuDat[[idVar]] %in% stuItems[[idVar]]]
-    stop(paste0("The ", dQuote("stuDat"), " argument must be a data frame with a column ", dQuote("idVar"), " that correspond to every name of ", dQuote("stuItems"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "." ))
-  }
-  # make sure stuItems and stuDat are in the same order
-  stuItems[[idVar]] <- as.character(stuItems[[idVar]])
-  stuItems$key <- as.character(stuItems$key)
+  stuItems <- cleanStuItems(stuItems, stuDat, idVar)
   stuDat[[idVar]] <- as.character(stuDat[[idVar]])
-  stuItems <- stuItems[order(stuItems[[idVar]]), ]
   stuDat <- stuDat[order(stuDat[[idVar]]), ]
   # overall: boolean for if this is a test (multiple subtest)
   # assume not, check if TRUE later
@@ -326,7 +310,6 @@ mml <- function(formula,
       overall <- TRUE
     }
   } # end else for if(length(formula) > 2)
-
   # in this situation, it is not composite/overall
   if(length(unique(paramTab$subtest)) == 1) {
     overall <- FALSE
@@ -358,7 +341,7 @@ mml <- function(formula,
     subt <- c()
     resl <- list()
     s <- c()
-    posteriorEsts<- data.frame()
+    posteriorEsts <- data.frame()
     for(sti in 1:length(subtests)) {
       subt <- c(subt, subtests[sti])
       termLabels <- attr(terms(formula), "term.labels")
@@ -596,18 +579,12 @@ mml <- function(formula,
     stop(paste0("no complete cases in ", dQuote("stuItems"), "."))
   }
 
-  # make sure stuItems (now stu) has only data.frames in each element
-  # sort by key/ItemID
-  if(any(!c(idVar, "key", "score") %in% colnames(stuItems))) {
-    stop(paste0("Argument ", dQuote("stuItems"), " must have variables ", pasteItems(c(idVar, "key", "score")), "."))
-  }
-  # these are the only columns we need
-  stuItems <- stuItems[,c(idVar, "key", "score")]
-  # drop rows with no test data on them, they get dropped from the likelihood function anyways
-  stuItems <- stuItems[!is.na(stuItems$score),]
   # only keep items in the paramTab
-  stuItems <- stuItems[stuItems$key %in% paramTab$ItemID,]
-  paramTab <- paramTab[order(paramTab$ItemID),]
+  stuItems <- stuItems[stuItems$key %in% paramTab$ItemID, ]
+  if(nrow(stuItems) == 0) {
+    stop(paste0("no student scored found for any of the relevant items. Check that dichotParamTab and polyParamTab ", dQuote("ItemID"), " columns agree with stuITems ", dQuote("key"), " column values."))
+  }
+  paramTab <- paramTab[order(paramTab$ItemID), ]
   stu <- stuItems[order(stuItems$key), ]
   # check response ranges
   agg <- data.frame(key = unique(stu$key))
@@ -679,6 +656,7 @@ mml <- function(formula,
     # calculate rr1 on a single core
     rr1 <- calcRR1(stu, Q, polyModel, paramTab, nodes, fast)
   }
+
   # add names to rr1
   colnames(rr1) <- names(stu)
   if(!all.equal(colnames(rr1), stuDat[[idVar]])) {
@@ -779,35 +757,68 @@ mmlCor <- function(Xb1,
   return(list(rho=tanh(opt) * s1 * s2, corLnl=fn2f))
 }
 
+cleanStuItems <- function(si, stuDat, idVar) {
+  # make sure every stuItems student has a stuDat student, and the other way around
+  if(!inherits(si, "data.frame")) {
+    si <- do.call(rbind, si)
+  }
+  if(length(class(si))>1) {
+    # not all data.frames are the same, recast
+    si <- as.data.frame(si)
+  }
+  expectedSIVars <- c(idVar, "key", "score")
+  missingVarsSI <- expectedSIVars[!expectedSIVars %in% colnames(si)]
+  if(length(missingVarsSI) > 0) {
+    stop("stuItems missing column(s): ", paste(missingVarsSI, collapse=", "))
+  }
+  # these are the only columns we need, in this order
+  si <- si[,c(idVar, "key", "score")]
+  if(any(!si[[idVar]] %in% stuDat[[idVar]])) {
+    missing <- (si[[idVar]])[!(si[[idVar]]) %in% stuDat[[idVar]]]
+    stop(paste0("The ", dQuote("si"), " argument must be a list with names that correspond to every " , dQuote("idVar"), " in ", dQuote("stuDat"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "."))
+  }
+  if(any(!stuDat[[idVar]] %in% si[[idVar]])) {
+    missing <- stuDat[[idVar]][!stuDat[[idVar]] %in% si[[idVar]]]
+    stop(paste0("The ", dQuote("stuDat"), " argument must be a data frame with a column ", dQuote("idVar"), " that correspond to every name of ", dQuote("si"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "." ))
+  }
+  # make sure si and stuDat are in the same order
+  si[[idVar]] <- as.character(si[[idVar]])
+  si$key <- as.character(si$key)
+  si <- si[order(si[[idVar]]), ]
+  # drop rows with no test data on them, they get dropped from the likelihood function anyways
+  si <- si[!is.na(si$score),]
+  return(si)
+}
+
 cleanDichotParamTab <- function(dpt) {
-  if(!is.null(dpt)) {
-    if(!inherits(dpt, "data.frame")) {
-      stop(paste0("Argument ", dQuote("dichotParamTab"), " must be a data frame."))
-    } else {
-      if(length(class(dpt))>1) {
-        # not all data.frames are the same, recast
-        dpt <- as.data.frame(dpt)
-      }
-    }
-    if(!"ItemID" %in% colnames(dpt)) {
-      stop(paste0("Argument ", dQuote("dichotParamTab"), " must have column ", dQuote("ItemID"), "."))
-    }
-    if(length(unique(dpt$ItemID)) < nrow(dpt)) {
-      stop(paste0("The ", dQuote("ItemID"), " column on the ", dQuote("dichotParamTab"), " argument must be unique."))
-    }
-    colnames(dpt)[colnames(dpt)=="a"] <- "slope"
-    colnames(dpt)[colnames(dpt) %in% c("asymptote", "g") ] <- "guessing"
-    colnames(dpt)[colnames(dpt)=="d"] <- "difficulty"
-    reqVar <- c("ItemID", "test", "slope", "difficulty", "guessing")
-    if(any(!reqVar %in% colnames(dpt))) {
-      stop(paste0("dichotParamTab must have all of the columns ", pasteItems(reqVar), "."))
-    }
-    if("subtest" %in% colnames(dpt)) {
-      dpt$subtest <- as.character(dpt$subtest)
-    }
-    if("test" %in% colnames(dpt)) {
-      dpt$test <- as.character(dpt$test)
-    }
+  if(is.null(dpt)) {
+    return(NULL)
+  }
+  if(!inherits(dpt, "data.frame")) {
+    stop(paste0("Argument ", dQuote("dichotParamTab"), " must be a data frame."))
+  }
+  if(length(class(dpt))>1) {
+    # not all data.frames are the same, recast
+    dpt <- as.data.frame(dpt)
+  }
+  if(!"ItemID" %in% colnames(dpt)) {
+    stop(paste0("Argument ", dQuote("dichotParamTab"), " must have column ", dQuote("ItemID"), "."))
+  }
+  if(length(unique(dpt$ItemID)) < nrow(dpt)) {
+    stop(paste0("The ", dQuote("ItemID"), " column on the ", dQuote("dichotParamTab"), " argument must be unique."))
+  }
+  colnames(dpt)[colnames(dpt)=="a"] <- "slope"
+  colnames(dpt)[colnames(dpt) %in% c("asymptote", "g") ] <- "guessing"
+  colnames(dpt)[colnames(dpt)=="d"] <- "difficulty"
+  reqVar <- c("ItemID", "test", "slope", "difficulty", "guessing")
+  if(any(!reqVar %in% colnames(dpt))) {
+    stop(paste0("dichotParamTab must have all of the columns ", pasteItems(reqVar), "."))
+  }
+  if("subtest" %in% colnames(dpt)) {
+    dpt$subtest <- as.character(dpt$subtest)
+  }
+  if("test" %in% colnames(dpt)) {
+    dpt$test <- as.character(dpt$test)
   }
   return(dpt)
 }

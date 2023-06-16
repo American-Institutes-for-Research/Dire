@@ -8,10 +8,10 @@
 <meta name="description" content="Dire">
 <title>Weighted Marginal Maximum Likelihood Regression Estimation • Dire</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.1.3/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Weighted Marginal Maximum Likelihood Regression Estimation">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Weighted Marginal Maximum Likelihood Regression Estimation">
 <meta property="og:description" content="Dire">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -65,10 +65,12 @@
 
 
 
-<script src="MML_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+
+<div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Weighted Marginal Maximum Likelihood Regression Estimation</h1>
-                        <h4 data-toc-skip class="author">Developed by Paul Bailey and Harold Doran</h4>
+                        <h4 data-toc-skip class="author">Developed by
+Paul Bailey and Harold Doran</h4>
             
             <h4 data-toc-skip class="date">March 27, 2020</h4>
       
@@ -78,157 +80,427 @@
 
     
     
-<p>This document describes weighted Marginal Maximum Likelihood (MML) estimation for student test data in the <code>Dire</code> package. The model treats abilities as a latent variable and estimates a linear model in the latent space. In this framework, failing to account for the measurement variance will bias the regression estimates. The <code>Dire</code> package can directly estimate these models in the latent space. Aditionally, it can generate palausible values (PVs) which allow for unbiased estimation using the same formulas as multiple imputation (Mislevy et al.).</p>
-<p>For simplicity, focusing first on a univariate model where there is only one latent ability measured, the student test data are assumed to have been generated by an Item Response Theory (IRT) model, where student <span class="math inline">\(i\)</span> has ability <span class="math inline">\(\theta_{i}\)</span>. The probability of a student getting an item correct—for a dichotomous item—increases in ability but decreases in item difficulty. Put together, the likelihood of student <span class="math inline">\(i\)</span>’s responss to items (<span class="math inline">\(R_{i}\)</span>) is a function of the student’s latent ability in the construct (<span class="math inline">\(\theta_{i}\)</span>), the item parameters of each item(<span class="math inline">\(P\)</span>) <span class="math display">\[\begin{align}
-\mathcal{L}(\bm{R}_{i}| \theta_{i} , \bm{P} )= \prod_{h=1}^{H} {\rm Pr}(R_{ih}| \theta_{i}, \bm{P}_h)
-\end{align}\]</span> where the probability function in the product is showin in the appendix and depends on the IRT model used for the item. it is possible that a student will not have been shown an item and then <span class="math inline">\(R_{ij}\)</span> is missing. The missing response does not change the probability. This can be thought of as <span class="math inline">\({\rm Pr}(R_{ih}| \theta_{i}, \bm{P}_h)\)</span> being 1 for all values of <span class="math inline">\(\theta_{i}\)</span> and <span class="math inline">\(\bm{P}_h\)</span>.</p>
-<p>This latent trait is then modeled as a function of a row vector of explanatory variables <span class="math inline">\(\bm{X}_i\)</span> so that. <span class="math display">\[\begin{align}
+<p>This document describes weighted Marginal Maximum Likelihood (MML)
+estimation for student test data in the <code>Dire</code> package. The
+model treats abilities as a latent variable and estimates a linear model
+in the latent space. In this framework, failing to account for the
+measurement variance will bias the regression estimates. The
+<code>Dire</code> package can directly estimate these models in the
+latent space. Aditionally, it can generate palausible values (PVs) which
+allow for unbiased estimation using the same formulas as multiple
+imputation (Mislevy et al.).</p>
+<p>For simplicity, focusing first on a univariate model where there is
+only one latent ability measured, the student test data are assumed to
+have been generated by an Item Response Theory (IRT) model, where
+student <span class="math inline">\(i\)</span> has ability <span class="math inline">\(\theta_{i}\)</span>. The probability of a student
+getting an item correct—for a dichotomous item—increases in ability but
+decreases in item difficulty. Put together, the likelihood of student
+<span class="math inline">\(i\)</span>’s responss to items (<span class="math inline">\(R_{i}\)</span>) is a function of the student’s
+latent ability in the construct (<span class="math inline">\(\theta_{i}\)</span>), the item parameters of each
+item(<span class="math inline">\(P\)</span>) <span class="math display">\[\begin{align}
+\mathcal{L}(\bm{R}_{i}| \theta_{i} , \bm{P} )= \prod_{h=1}^{H} {\rm
+Pr}(R_{ih}| \theta_{i}, \bm{P}_h)
+\end{align}\]</span> where the probability function in the product is
+showin in the appendix and depends on the IRT model used for the item.
+it is possible that a student will not have been shown an item and then
+<span class="math inline">\(R_{ij}\)</span> is missing. The missing
+response does not change the probability. This can be thought of as
+<span class="math inline">\({\rm Pr}(R_{ih}| \theta_{i},
+\bm{P}_h)\)</span> being 1 for all values of <span class="math inline">\(\theta_{i}\)</span> and <span class="math inline">\(\bm{P}_h\)</span>.</p>
+<p>This latent trait is then modeled as a function of a row vector of
+explanatory variables <span class="math inline">\(\bm{X}_i\)</span> so
+that. <span class="math display">\[\begin{align}
 \theta_i = \bm{X}_i \bm{\beta} + \epsilon_i
 \end{align}\]</span> Where <span class="math display">\[\begin{align}
 \epsilon_i \sim N(0,\sigma)
 \end{align}\]</span></p>
-<p>This creates two sets of likelihoods for person <span class="math inline">\(i\)</span>, one associated with the covariates (<span class="math inline">\(\bm{X}_i\)</span>) and another associated with the observed item responses (<span class="math inline">\(\bm{R}_i\)</span>). The likelihood for the student is the product of these two. <span class="math display">\[\begin{align}
-\mathcal{L}(\bm{R}_{i}| \bm{\beta}, \sigma, \bm{X}_i , \bm{P} ) = \int f(\theta_i) \cdot \prod_{h=1}^{H} {\rm Pr}(R_{ih}| \theta_i, \bm{P}_h) d\theta_i
-\end{align}\]</span> where <span class="math inline">\(f(\theta_i)\)</span> is the density of student <span class="math inline">\(i\)</span>s latent ability <span class="math inline">\(\theta_i\)</span>. Substituting the formula for above, <span class="math display">\[\begin{align}
-\mathcal{L}(\bm{R}_{i}| \bm{\beta}, \sigma, \bm{X}_i , \bm{P} ) = \int \frac{1}{\sigma \sqrt{2\pi}}\exp(\frac{-\epsilon_i^2}{2\sigma}) \prod_{h=1}^{H} {\rm Pr}(R_{ih}| \bm{X}_i \beta + \epsilon_i, \bm{P}_h) d\epsilon_i 
-\end{align}\]</span> The term in the integral is the convolusion of two functions and there is no closed form solution. <code>Dire</code> follows the AM statistical software (Cohen &amp; Jiang 1999) and uses fixed quadrature points set by the user.</p>
-<p>In addition, Dire allows for the construct being scored to not be a simple univariate construct but to incorporate several correlated subscales or constructs. If these are labeled from one to <span class="math inline">\(J\)</span> then each student has a vector <span class="math inline">\(\bm{\theta}_i\)</span> with components <span class="math inline">\(\theta_{ij}\)</span>. This leads to <span class="math inline">\(J\)</span> latent regression equations and requires a <span class="math inline">\(J\)</span>-demensional integral. <span class="math display">\[\begin{align}
-\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma}, \bm{X}_i , \bm{P} ) = \int ... \int \frac{1}{(2\pi)^{\frac{J}{2}}\sqrt{{\rm det}(\bm{\Sigma})}} \exp(-\frac{1}{2}\bm{\epsilon}_i^T \bm{\Sigma} \bm{\epsilon}_i) \prod_{j=1}^J \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj}) d\theta_{i1} ... d\theta_{iJ} \label{eq:introeq}
-\end{align}\]</span> where <span class="math inline">\(\bm{R}_{ijh}\)</span>, <span class="math inline">\(\bm{P}_{hj}\)</span>, and <span class="math inline">\(\bm{\beta}_j\)</span> all have a subscript <span class="math inline">\(j\)</span> added because there is now a set of them for each subscale <span class="math inline">\(j\)</span>, <span class="math inline">\(\bm{\epsilon}_i\)</span> is now a vector with elements <span class="math inline">\(\epsilon_{ij}\)</span>, and <span class="math inline">\(\bm{\Sigma}\)</span> is the covariance matrix for the <span class="math inline">\(\bm{\epsilon}\)</span> vector, which allows for covariance between constructs at the student level in that when <span class="math inline">\(\Sigma_{jj^\prime}\)</span> is positive than a student with a higher score on construct <span class="math inline">\(j\)</span>, conditional on <span class="math inline">\(\bm{X}_i\)</span> will also be expected to have a higher score on construct <span class="math inline">\(j^\prime\)</span>.</p>
-<p>This problem suffers from the curse of dimensionality. However, as is pointed out by Cohen and Jiang (1999) this is identical to seemingly unrelated regression (SUR) and can be solved by fitting <span class="math inline">\(\beta_j\)</span> and <span class="math inline">\(\sigma_j\)</span> once for each subscale and then identifying each of the <span class="math inline">\({ J \choose 2}\)</span> covariance terms in a pairwise fashion.</p>
-<p>This comes from the fact that the multivariate normal can be decomposed into two multivariate normals, one conditional on the other. First re-writing, eq  with the normal rewritten as <span class="math inline">\(f(\epsilon_i)\)</span> <span class="math display">\[\begin{align}
-\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma}, \bm{X}_i , \bm{P} ) =  \int ... \int  f(\epsilon_i) \prod_{j=1}^J \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj}) d\theta_{i1} ... d\theta_{iJ} \label{eq:introeq}
-\end{align}\]</span> the multivariate normal can be decomposed into the product of two distributions, an unconditional (univariate-)normal and a condional (potentially multivariate when <span class="math inline">\(J&gt;2\)</span>) normal. Using the first integration dimension, without loss of generality, this becomes <span class="math display">\[\begin{align}
-\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma}, \bm{X}_i , \bm{P} ) =  \int ... \int  f_1(\epsilon_{i1}) f_{-1}(\epsilon_{i,-1}|\epsilon_{i1}) \prod_{j=1}^J \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj}) d\theta_{i1} ... d\theta_{iJ} \label{eq:introeq}
-\end{align}\]</span> where <span class="math inline">\(f_1(\epsilon_{i1})\)</span> is the normal density function for a single variable and <span class="math inline">\(f_{-1}(\epsilon_{i,-1}|\epsilon_{i1})\)</span> is the density function of the other variables, conditional on <span class="math inline">\(\epsilon_{i1}\)</span>. This can then be rearanged to <span class="math display">\[\begin{align}
-\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma}, \bm{X}_i , \bm{P} ) = &amp;  \int f_1(\epsilon_{i1}) \left[ \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj}) \right] d\theta_{i1} \nonumber \\ &amp; \int ... \int  f_{-1}(\epsilon_{i,-1}|\epsilon_{i1}) \prod_{j=2}^J \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj}) d\theta_{i2} ... d\theta_{iJ} \label{eq:introeq}
-\end{align}\]</span> Changing to the numerical quadrature representation <span class="math display">\[\begin{align}
-\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma}, \bm{X}_i , \bm{P} ) = &amp; \sum_{q_1=1}^Q \delta f_1(q_1 - \bm{X}_i \beta_1) \left[ \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| q_1, \bm{P}_{hj}) \right]   \nonumber \\ &amp; \sum_{q_2=1}^Q ... \sum_{q_J=1}^Q \delta^{J-1}  f_{-1}(\epsilon_{i,-1}(q_{-1})|q_{i1}) \prod_{j=2}^J \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| q_{ij}, \bm{P}_{hj}) \label{eq:introeq}
+<p>This creates two sets of likelihoods for person <span class="math inline">\(i\)</span>, one associated with the covariates
+(<span class="math inline">\(\bm{X}_i\)</span>) and another associated
+with the observed item responses (<span class="math inline">\(\bm{R}_i\)</span>). The likelihood for the student
+is the product of these two. <span class="math display">\[\begin{align}
+\mathcal{L}(\bm{R}_{i}| \bm{\beta}, \sigma, \bm{X}_i , \bm{P} ) = \int
+f(\theta_i) \cdot \prod_{h=1}^{H} {\rm Pr}(R_{ih}| \theta_i, \bm{P}_h)
+d\theta_i
+\end{align}\]</span> where <span class="math inline">\(f(\theta_i)\)</span> is the density of student
+<span class="math inline">\(i\)</span>s latent ability <span class="math inline">\(\theta_i\)</span>. Substituting the formula for
+above, <span class="math display">\[\begin{align}
+\mathcal{L}(\bm{R}_{i}| \bm{\beta}, \sigma, \bm{X}_i , \bm{P} ) = \int
+\frac{1}{\sigma \sqrt{2\pi}}\exp(\frac{-\epsilon_i^2}{2\sigma})
+\prod_{h=1}^{H} {\rm Pr}(R_{ih}| \bm{X}_i \beta + \epsilon_i, \bm{P}_h)
+d\epsilon_i
+\end{align}\]</span> The term in the integral is the convolusion of two
+functions and there is no closed form solution. <code>Dire</code>
+follows the AM statistical software (Cohen &amp; Jiang 1999) and uses
+fixed quadrature points set by the user.</p>
+<p>In addition, Dire allows for the construct being scored to not be a
+simple univariate construct but to incorporate several correlated
+subscales or constructs. If these are labeled from one to <span class="math inline">\(J\)</span> then each student has a vector <span class="math inline">\(\bm{\theta}_i\)</span> with components <span class="math inline">\(\theta_{ij}\)</span>. This leads to <span class="math inline">\(J\)</span> latent regression equations and
+requires a <span class="math inline">\(J\)</span>-demensional integral.
+<span class="math display">\[\begin{align}
+\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma},
+\bm{X}_i , \bm{P} ) = \int ... \int
+\frac{1}{(2\pi)^{\frac{J}{2}}\sqrt{{\rm det}(\bm{\Sigma})}}
+\exp(-\frac{1}{2}\bm{\epsilon}_i^T \bm{\Sigma} \bm{\epsilon}_i)
+\prod_{j=1}^J \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij},
+\bm{P}_{hj}) d\theta_{i1} ... d\theta_{iJ} \label{eq:introeq}
+\end{align}\]</span> where <span class="math inline">\(\bm{R}_{ijh}\)</span>, <span class="math inline">\(\bm{P}_{hj}\)</span>, and <span class="math inline">\(\bm{\beta}_j\)</span> all have a subscript <span class="math inline">\(j\)</span> added because there is now a set of
+them for each subscale <span class="math inline">\(j\)</span>, <span class="math inline">\(\bm{\epsilon}_i\)</span> is now a vector with
+elements <span class="math inline">\(\epsilon_{ij}\)</span>, and <span class="math inline">\(\bm{\Sigma}\)</span> is the covariance matrix for
+the <span class="math inline">\(\bm{\epsilon}\)</span> vector, which
+allows for covariance between constructs at the student level in that
+when <span class="math inline">\(\Sigma_{jj^\prime}\)</span> is positive
+than a student with a higher score on construct <span class="math inline">\(j\)</span>, conditional on <span class="math inline">\(\bm{X}_i\)</span> will also be expected to have a
+higher score on construct <span class="math inline">\(j^\prime\)</span>.</p>
+<p>This problem suffers from the curse of dimensionality. However, as is
+pointed out by Cohen and Jiang (1999) this is identical to seemingly
+unrelated regression (SUR) and can be solved by fitting <span class="math inline">\(\beta_j\)</span> and <span class="math inline">\(\sigma_j\)</span> once for each subscale and then
+identifying each of the <span class="math inline">\({ J \choose
+2}\)</span> covariance terms in a pairwise fashion.</p>
+<p>This comes from the fact that the multivariate normal can be
+decomposed into two multivariate normals, one conditional on the other.
+First re-writing, eq <span class="math inline">\(\ref{eq:introeq}\)</span> with the normal
+rewritten as <span class="math inline">\(f(\epsilon_i)\)</span> <span class="math display">\[\begin{align}
+\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma},
+\bm{X}_i , \bm{P} ) =  \int ... \int  f(\epsilon_i) \prod_{j=1}^J
+\prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj})
+d\theta_{i1} ... d\theta_{iJ} \label{eq:introeq}
+\end{align}\]</span> the multivariate normal can be decomposed into the
+product of two distributions, an unconditional (univariate-)normal and a
+condional (potentially multivariate when <span class="math inline">\(J&gt;2\)</span>) normal. Using the first
+integration dimension, without loss of generality, this becomes <span class="math display">\[\begin{align}
+\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma},
+\bm{X}_i , \bm{P} ) =  \int ... \int  f_1(\epsilon_{i1})
+f_{-1}(\epsilon_{i,-1}|\epsilon_{i1}) \prod_{j=1}^J \prod_{h_j=1}^{H_j}
+{\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj}) d\theta_{i1} ...
+d\theta_{iJ} \label{eq:introeq}
+\end{align}\]</span> where <span class="math inline">\(f_1(\epsilon_{i1})\)</span> is the normal density
+function for a single variable and <span class="math inline">\(f_{-1}(\epsilon_{i,-1}|\epsilon_{i1})\)</span> is
+the density function of the other variables, conditional on <span class="math inline">\(\epsilon_{i1}\)</span>. This can then be rearanged
+to <span class="math display">\[\begin{align}
+\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma},
+\bm{X}_i , \bm{P} ) = &amp;  \int f_1(\epsilon_{i1}) \left[
+\prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj}) \right]
+d\theta_{i1} \nonumber \\ &amp; \int ...
+\int  f_{-1}(\epsilon_{i,-1}|\epsilon_{i1}) \prod_{j=2}^J
+\prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| \theta_{ij}, \bm{P}_{hj})
+d\theta_{i2} ... d\theta_{iJ} \label{eq:introeq}
+\end{align}\]</span> Changing to the numerical quadrature representation
+<span class="math display">\[\begin{align}
+\mathcal{L} (\bm{R}_{i}| \bm{\beta}_1, ..., \bm{\beta}_J, \bm{\Sigma},
+\bm{X}_i , \bm{P} ) = &amp; \sum_{q_1=1}^Q \delta f_1(q_1 - \bm{X}_i
+\beta_1) \left[ \prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| q_1, \bm{P}_{hj})
+\right]   \nonumber \\ &amp; \sum_{q_2=1}^Q ... \sum_{q_J=1}^Q
+\delta^{J-1}  f_{-1}(\epsilon_{i,-1}(q_{-1})|q_{i1}) \prod_{j=2}^J
+\prod_{h_j=1}^{H_j} {\rm Pr}(R_{ijh}| q_{ij}, \bm{P}_{hj})
+\label{eq:introeq}
 \end{align}\]</span></p>
-<p>this is additively seperable—the max with respect to <span class="math inline">\(\bm{\beta_1}\)</span> can be found only with data for the first construct. The other constructs can be relabeled and each can be maximized in this way. Similarly, the variances can be independently found in this way.</p>
-<p>The <code>Dire</code> package helps analyists estimate coefficients in two potentially useful ways. First the parameters in the regression can be directly estimated, where the <span class="math inline">\(\beta\)</span> values are used from the above model fit. Second, <code>Dire</code> can generate plausible values from the fitted likelihood surface.</p>
-<p>The direct estimation method has the advantage of using the latent space to identify coefficients. However, it can be time consuming to fit a latent parameter model.</p>
-<p>The plausible value approach has two advantages. First, it can be used to fit a saturated model (with all possible coefficients of interest) and then other models that use subsets or linear combinations of those coefficients can be fit to the plausible values. Second, doing this saves time relative to fitting a direct estimation model per regression specification.</p>
-<p>This document first describes how parameters are estimated in the latest space. The third section describes the variance estimator. The subsequent section describes estimation of degrees of freedom. Finally, it describes plausible value generation. Each section starts by describing the univariate case and then describes the case with <span class="math inline">\(J\)</span> potentially correlated constructs or subscales. Additionally, while the introduction has not mentioned weights, they are incorporated in the subsequent sections.</p>
+<p>this is additively seperable—the max with respect to <span class="math inline">\(\bm{\beta_1}\)</span> can be found only with data
+for the first construct. The other constructs can be relabeled and each
+can be maximized in this way. Similarly, the variances can be
+independently found in this way.</p>
+<p>The <code>Dire</code> package helps analyists estimate coefficients
+in two potentially useful ways. First the parameters in the regression
+can be directly estimated, where the <span class="math inline">\(\beta\)</span> values are used from the above
+model fit. Second, <code>Dire</code> can generate plausible values from
+the fitted likelihood surface.</p>
+<p>The direct estimation method has the advantage of using the latent
+space to identify coefficients. However, it can be time consuming to fit
+a latent parameter model.</p>
+<p>The plausible value approach has two advantages. First, it can be
+used to fit a saturated model (with all possible coefficients of
+interest) and then other models that use subsets or linear combinations
+of those coefficients can be fit to the plausible values. Second, doing
+this saves time relative to fitting a direct estimation model per
+regression specification.</p>
+<p>This document first describes how parameters are estimated in the
+latest space. The third section describes the variance estimator. The
+subsequent section describes estimation of degrees of freedom. Finally,
+it describes plausible value generation. Each section starts by
+describing the univariate case and then describes the case with <span class="math inline">\(J\)</span> potentially correlated constructs or
+subscales. Additionally, while the introduction has not mentioned
+weights, they are incorporated in the subsequent sections.</p>
 <div class="section level2">
 <h2 id="parameter-estimation">Parameter Estimation<a class="anchor" aria-label="anchor" href="#parameter-estimation"></a>
 </h2>
-<p>Starting with the single construct MML model for test data for <span class="math inline">\(n\)</span> individuals, conditional on a set of parameters for a set of <span class="math inline">\(H\)</span> test items, the likelihood of a regression equation is <span class="math display">\[\begin{align}
-\mathcal{L} (\bm{\beta}, \sigma|\bm{w}, \bm{R}, \bm{X}, \bm{P}) = \prod_{i=1}^N  \left[ \int \frac{1}{\sigma \sqrt{2\pi}} \exp \frac{-(\theta_i - \bm{X}_i \beta)^2}{2\sigma^2}  \, \prod_{h=1}^H {\rm Pr}(\bm{R}_{ih}|\theta_i,\bm{P}_h) d\theta_i \right]^{\bm{w}_i}
-\end{align}\]</span> where <span class="math inline">\(\mathcal{L}\)</span> is the likelihood of the regression parameters <span class="math inline">\(\bm{\beta}\)</span> with full sample weights <span class="math inline">\(\bm{w}_i\)</span> conditional on item score matrix <span class="math inline">\(\bm{R}\)</span><em>,</em> student covariate matrix <span class="math inline">\(\bm{X}\)</span><em>,</em> and item parameter data <span class="math inline">\(\bm{P}\)</span><em>;</em> <span class="math inline">\(\sigma^2\)</span> is the variance of the regression residual; <span class="math inline">\(\theta_i\)</span> is the <span class="math inline">\(i\)</span>th student’s latent ability measure that is being integrated out; <span class="math inline">\({\rm Pr}(\bm{R}_{ih}|\theta_i, \bm{P}_h)\)</span> is the probability of individual <span class="math inline">\(i\)</span>’s score on test item <span class="math inline">\(h\)</span><em>,</em> conditional on the student’s ability and item parameters <span class="math inline">\(\bm{P}_h\)</span>—see the appendix for example forms of <span class="math inline">\({\rm Pr}(\bm{R}_{ih}|\theta_i, \bm{P}_h)\)</span>.</p>
-<p>The integral is evaluated using the trapezoid rule at quadrature points <span class="math inline">\(t_q\)</span> and quadrature weights <span class="math inline">\(\delta\)</span> so that <span class="math display">\[\begin{align}
-\mathcal{L} (\bm{\beta}, \sigma|\bm{w}, \bm{R}, \bm{X}, \bm{P}) &amp;= \prod_{i=1}^N \left[ \sum_{q=1}^Q \delta \frac{1}{\sigma \sqrt{2\pi}} \exp \frac{-(t_q - \bm{X}_i \bm{\beta})^2}{2\sigma^2} \prod_{h=1}^H  {\rm Pr}(\bm{R}_{ih}|t_q, \bm{P}_h)\right]^{\bm{w}_i}
-\end{align}\]</span> where <span class="math inline">\(\delta\)</span> is the distance between any two uniformly spaced quadrature points so that <span class="math inline">\(\delta = t_{q+1} - t_{q}\)</span> for any <span class="math inline">\(q\)</span> that is at least one and less than <span class="math inline">\(Q\)</span>. The range and value of <span class="math inline">\(Q\)</span> parameterize the quadrature, and its accuracy and should be varied to ensure convergence. The advantage of the trapezoidal rule is that the fixed quadrature points allow the values of the probability (the portion inside the product) to be calculated once per student.</p>
+<p>Starting with the single construct MML model for test data for <span class="math inline">\(n\)</span> individuals, conditional on a set of
+parameters for a set of <span class="math inline">\(H\)</span> test
+items, the likelihood of a regression equation is <span class="math display">\[\begin{align}
+\mathcal{L} (\bm{\beta}, \sigma|\bm{w}, \bm{R}, \bm{X}, \bm{P}) =
+\prod_{i=1}^N  \left[ \int \frac{1}{\sigma \sqrt{2\pi}} \exp
+\frac{-(\theta_i - \bm{X}_i \beta)^2}{2\sigma^2}  \, \prod_{h=1}^H {\rm
+Pr}(\bm{R}_{ih}|\theta_i,\bm{P}_h) d\theta_i \right]^{\bm{w}_i}
+\end{align}\]</span> where <span class="math inline">\(\mathcal{L}\)</span> is the likelihood of the
+regression parameters <span class="math inline">\(\bm{\beta}\)</span>
+with full sample weights <span class="math inline">\(\bm{w}_i\)</span>
+conditional on item score matrix <span class="math inline">\(\bm{R}\)</span><em>,</em> student covariate matrix
+<span class="math inline">\(\bm{X}\)</span><em>,</em> and item parameter
+data <span class="math inline">\(\bm{P}\)</span><em>;</em> <span class="math inline">\(\sigma^2\)</span> is the variance of the
+regression residual; <span class="math inline">\(\theta_i\)</span> is
+the <span class="math inline">\(i\)</span>th student’s latent ability
+measure that is being integrated out; <span class="math inline">\({\rm
+Pr}(\bm{R}_{ih}|\theta_i, \bm{P}_h)\)</span> is the probability of
+individual <span class="math inline">\(i\)</span>’s score on test item
+<span class="math inline">\(h\)</span><em>,</em> conditional on the
+student’s ability and item parameters <span class="math inline">\(\bm{P}_h\)</span>—see the appendix for example
+forms of <span class="math inline">\({\rm Pr}(\bm{R}_{ih}|\theta_i,
+\bm{P}_h)\)</span>.</p>
+<p>The integral is evaluated using the trapezoid rule at quadrature
+points <span class="math inline">\(t_q\)</span> and quadrature weights
+<span class="math inline">\(\delta\)</span> so that <span class="math display">\[\begin{align}
+\mathcal{L} (\bm{\beta}, \sigma|\bm{w}, \bm{R}, \bm{X}, \bm{P}) &amp;=
+\prod_{i=1}^N \left[ \sum_{q=1}^Q \delta \frac{1}{\sigma \sqrt{2\pi}}
+\exp \frac{-(t_q - \bm{X}_i \bm{\beta})^2}{2\sigma^2}
+\prod_{h=1}^H  {\rm Pr}(\bm{R}_{ih}|t_q, \bm{P}_h)\right]^{\bm{w}_i}
+\end{align}\]</span> where <span class="math inline">\(\delta\)</span>
+is the distance between any two uniformly spaced quadrature points so
+that <span class="math inline">\(\delta = t_{q+1} - t_{q}\)</span> for
+any <span class="math inline">\(q\)</span> that is at least one and less
+than <span class="math inline">\(Q\)</span>. The range and value of
+<span class="math inline">\(Q\)</span> parameterize the quadrature, and
+its accuracy and should be varied to ensure convergence. The advantage
+of the trapezoidal rule is that the fixed quadrature points allow the
+values of the probability (the portion inside the product) to be
+calculated once per student.</p>
 <p>The log-likelihood is given by <span class="math display">\[\begin{align}
-\ell (\bm{\beta}, \sigma|\bm{w}, \bm{R}, \bm{X}, \bm{P}) &amp;= \sum_{i=1}^N \bm{w}_i \, {\rm log} \left[\delta \sum_{q=1}^Q \frac{1}{\sigma \sqrt{2\pi}} \exp \frac{-(t_q - \bm{X}_i \bm{\beta})^2}{2\sigma^2} \prod_{j=1}^K  {\rm Pr}(\bm{R}_{ij}|t_q, \bm{P}_j) \right]
-\end{align}\]</span> Note that <span class="math inline">\(\delta\)</span> can be removed for optimization, and its presence adds <span class="math inline">\({\rm log}(\delta) \sum \bm{w}_i\)</span> to the log-likelihood.</p>
+\ell (\bm{\beta}, \sigma|\bm{w}, \bm{R}, \bm{X}, \bm{P}) &amp;=
+\sum_{i=1}^N \bm{w}_i \, {\rm log} \left[\delta \sum_{q=1}^Q
+\frac{1}{\sigma \sqrt{2\pi}} \exp \frac{-(t_q - \bm{X}_i
+\bm{\beta})^2}{2\sigma^2} \prod_{j=1}^K  {\rm Pr}(\bm{R}_{ij}|t_q,
+\bm{P}_j) \right]
+\end{align}\]</span> Note that <span class="math inline">\(\delta\)</span> can be removed for optimization,
+and its presence adds <span class="math inline">\({\rm log}(\delta) \sum
+\bm{w}_i\)</span> to the log-likelihood.</p>
 <div class="section level3">
 <h3 id="composite-score-estimation">Composite Score Estimation<a class="anchor" aria-label="anchor" href="#composite-score-estimation"></a>
 </h3>
-<p>When the outcome of interest is composite scores, the parameters are estimated by separately estimating the coefficients for each subscale (<span class="math inline">\(\bm{\beta}_j\)</span> for subscale <span class="math inline">\(j\)</span>) and then calculating the composite scores (<span class="math inline">\(\bm{\beta}_c\)</span>) using subscale weights (<span class="math inline">\(\omega_j\)</span>). <span class="math display">\[\begin{align}
-\bm{\beta}_{c} &amp;= \sum_{j=1}^J \omega_j \bm{\beta}_j \label{eq:composite}
+<p>When the outcome of interest is composite scores, the parameters are
+estimated by separately estimating the coefficients for each subscale
+(<span class="math inline">\(\bm{\beta}_j\)</span> for subscale <span class="math inline">\(j\)</span>) and then calculating the composite
+scores (<span class="math inline">\(\bm{\beta}_c\)</span>) using
+subscale weights (<span class="math inline">\(\omega_j\)</span>). <span class="math display">\[\begin{align}
+\bm{\beta}_{c} &amp;= \sum_{j=1}^J \omega_j \bm{\beta}_j
+\label{eq:composite}
 \end{align}\]</span></p>
 <p>The full covariance matrix for the residuals (<span class="math inline">\(\bm{\epsilon}\)</span> vector) is then <span class="math display">\[\begin{align}
-\bm{\Sigma} = \left[ \begin{array}{cccc} \sigma_1^2 &amp; \sigma_{12} &amp; \cdots &amp; \sigma_{1J} \\ 
-                                       \sigma_{12} &amp; \sigma_{2}^2 &amp; \cdots &amp; \sigma_{2J} \\
-                                       \vdots      &amp; \vdots       &amp; \ddots &amp; \vdots \\
-                                       \sigma_{1J} &amp; \sigma_{2J}  &amp;  \cdots &amp; \sigma_{J}^2 \end{array} \right]
+\bm{\Sigma} = \left[ \begin{array}{cccc} \sigma_1^2 &amp; \sigma_{12}
+&amp; \cdots &amp; \sigma_{1J} \\
+                                       \sigma_{12} &amp; \sigma_{2}^2
+&amp; \cdots &amp; \sigma_{2J} \\
+                                       \vdots      &amp;
+\vdots       &amp; \ddots &amp; \vdots \\
+                                       \sigma_{1J} &amp;
+\sigma_{2J}  &amp;  \cdots &amp; \sigma_{J}^2 \end{array} \right]
 \end{align}\]</span></p>
 <p>The likelihood is then <span class="math display">\[\begin{align}
-\ell \left( \sigma_{jj^\prime} \left| \bm{\beta}_j, \bm{\beta}_{j^\prime} , \sigma_j, \sigma_{j^\prime}; \bm{w}, \bm{R}, \bm{X}, \bm{P}\right. \right) &amp;=
-\sum_{n=1}^N \bm{w}_n \, {\rm log} \left\{ \int \int \frac{1}{2\pi \sqrt{\left |{\bm{\Sigma}}_{(jj^\prime)} \right |}}\exp \left( \hat{\bm{\epsilon}}^T_{jj^\prime} {\bm{\Sigma}}_{(jj^\prime)}^{-1} \hat{\bm{\epsilon}}_{jj^\prime} \right) \right. \\
-&amp;\mathrel{\phantom{=}} \left. \times \left[ \prod_{h=1}^{H_j}  {\rm Pr}(\bm{R}_{njh}|\theta_j, \bm{P}_{h^\prime}) \right] \left[ \prod_{h^\prime=1}^{H_{j^\prime}} {\rm Pr}(\bm{R}_{nj^\prime h^\prime}|\theta_{j^\prime}, \bm{P}_{h^\prime}) \right] \right\} d\theta_j d\theta_{j^\prime}
+\ell \left( \sigma_{jj^\prime} \left| \bm{\beta}_j,
+\bm{\beta}_{j^\prime} , \sigma_j, \sigma_{j^\prime}; \bm{w}, \bm{R},
+\bm{X}, \bm{P}\right. \right) &amp;=
+\sum_{n=1}^N \bm{w}_n \, {\rm log} \left\{ \int \int \frac{1}{2\pi
+\sqrt{\left |{\bm{\Sigma}}_{(jj^\prime)} \right |}}\exp \left(
+\hat{\bm{\epsilon}}^T_{jj^\prime} {\bm{\Sigma}}_{(jj^\prime)}^{-1}
+\hat{\bm{\epsilon}}_{jj^\prime} \right) \right. \\
+&amp;\mathrel{\phantom{=}} \left. \times \left[ \prod_{h=1}^{H_j}  {\rm
+Pr}(\bm{R}_{njh}|\theta_j, \bm{P}_{h^\prime}) \right] \left[
+\prod_{h^\prime=1}^{H_{j^\prime}} {\rm Pr}(\bm{R}_{nj^\prime
+h^\prime}|\theta_{j^\prime}, \bm{P}_{h^\prime}) \right] \right\}
+d\theta_j d\theta_{j^\prime}
 \label{eq:compcovlnl}
-\end{align}\]</span> where <span class="math inline">\(|\bm{\Sigma}_{(jj^\prime)}|\)</span> is the determinant of <span class="math inline">\(\bm{\Sigma}_{(jj^\prime)}\)</span>, <span class="math display">\[\begin{align}
-\tilde{\bm{\Sigma}}_{(jj^\prime)} \equiv  \left[ \begin{array}{cc} \sigma_j^2 &amp; \sigma_{jj^\prime}  \\ 
-                                                     \sigma_{jj^\prime} &amp; \sigma_{j^\prime}^2 \end{array} \right]
+\end{align}\]</span> where <span class="math inline">\(|\bm{\Sigma}_{(jj^\prime)}|\)</span> is the
+determinant of <span class="math inline">\(\bm{\Sigma}_{(jj^\prime)}\)</span>, <span class="math display">\[\begin{align}
+\tilde{\bm{\Sigma}}_{(jj^\prime)} \equiv  \left[ \begin{array}{cc}
+\sigma_j^2 &amp; \sigma_{jj^\prime}  \\
+                                                     \sigma_{jj^\prime}
+&amp; \sigma_{j^\prime}^2 \end{array} \right]
 \end{align}\]</span> and the residual term is defined as <span class="math display">\[\begin{align}
-\hat{\bm{\epsilon}}_{jj^\prime} \equiv &amp; \left( \begin{array}{c} \theta_j - \bm{X}_i \bm{\beta}_j  \\ \theta_{j^\prime} - \bm{X}_i \bm{\beta}_{j^\prime} \end{array} \right) 
-\end{align}\]</span> Notice that the parameters <span class="math inline">\(\bm{\beta}_j\)</span>, <span class="math inline">\(\bm{\beta}_{j^\prime}\)</span>, <span class="math inline">\(\sigma_j^2\)</span>, and <span class="math inline">\(\sigma^2_{j^\prime}\)</span> are taken from the subscale estimation, so the only parameter not fixed is the covariance term <span class="math inline">\(\sigma_{ij}\)</span>.</p>
+\hat{\bm{\epsilon}}_{jj^\prime} \equiv &amp; \left( \begin{array}{c}
+\theta_j - \bm{X}_i \bm{\beta}_j  \\ \theta_{j^\prime} - \bm{X}_i
+\bm{\beta}_{j^\prime} \end{array} \right)
+\end{align}\]</span> Notice that the parameters <span class="math inline">\(\bm{\beta}_j\)</span>, <span class="math inline">\(\bm{\beta}_{j^\prime}\)</span>, <span class="math inline">\(\sigma_j^2\)</span>, and <span class="math inline">\(\sigma^2_{j^\prime}\)</span> are taken from the
+subscale estimation, so the only parameter not fixed is the covariance
+term <span class="math inline">\(\sigma_{ij}\)</span>.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="variance-estimation">Variance Estimation<a class="anchor" aria-label="anchor" href="#variance-estimation"></a>
 </h2>
-<p>Starting with the univariate case, estimating variance of the parameters <span class="math inline">\(\bm{\beta}\)</span> can be done in one of several ways.</p>
-<p>The inverse Hessian matrix is a consistent estimator when the estimator of <span class="math inline">\(\bm{\beta}\)</span> is consistent (Green, 2003, p. 520): <span class="math display">\[\begin{align}
-{\rm Var}(\bm{\beta}) = -\bm{H}(\bm{\beta})^{-1} =  - \left[\frac{\partial^2 \ell(\bm{\beta}, \sigma|\bm{w}, \bm{R}, \bm{X})}{\partial \bm{\beta}^2} \right]^{-1} \label{eq:vbeta}
-\end{align}\]</span> This variance is returned when the variance method is set to <code>consistent</code> or left as the default.</p>
-<p>A class of variance estimators typically called “sandwich” or “robust” variance estimators allow for variation in the residual and are of the form <span class="math display">\[\begin{align}
-{\rm Var}(\bm{\beta}) = H(\bm{\beta})^{-1} \bm{V} H(\bm{\beta})^{-1} \label{eq:sandwich}
-\end{align}\]</span> where <span class="math inline">\(V\)</span> is an estimate of the variance of the summed score function (Binder, 1983).</p>
-<p>For a convenience sample, we provide two robust estimators. First, the so-called <code>robust</code> (Huber or Huber-White) variance estimator uses <span class="math display">\[\begin{align}
-\bm{V} &amp;= \sum_{i=1}^N \left[ \frac{\partial \ell(\beta, \sigma|\bm{w}_i, \bm{R}_i, \bm{X}_i)}{\partial \beta} \right] \left[ \frac{\partial \ell(\beta, \sigma|\bm{w}_i, \bm{R}_i, \bm{X}_i)}{\partial \beta} \right]^{'} \label{eq:scorebased}
+<p>Starting with the univariate case, estimating variance of the
+parameters <span class="math inline">\(\bm{\beta}\)</span> can be done
+in one of several ways.</p>
+<p>The inverse Hessian matrix is a consistent estimator when the
+estimator of <span class="math inline">\(\bm{\beta}\)</span> is
+consistent (Green, 2003, p. 520): <span class="math display">\[\begin{align}
+{\rm Var}(\bm{\beta}) = -\bm{H}(\bm{\beta})^{-1} =  -
+\left[\frac{\partial^2 \ell(\bm{\beta}, \sigma|\bm{w}, \bm{R},
+\bm{X})}{\partial \bm{\beta}^2} \right]^{-1} \label{eq:vbeta}
+\end{align}\]</span> This variance is returned when the variance method
+is set to <code>consistent</code> or left as the default.</p>
+<p>A class of variance estimators typically called “sandwich” or
+“robust” variance estimators allow for variation in the residual and are
+of the form <span class="math display">\[\begin{align}
+{\rm Var}(\bm{\beta}) = H(\bm{\beta})^{-1} \bm{V} H(\bm{\beta})^{-1}
+\label{eq:sandwich}
+\end{align}\]</span> where <span class="math inline">\(V\)</span> is an
+estimate of the variance of the summed score function (Binder,
+1983).</p>
+<p>For a convenience sample, we provide two robust estimators. First,
+the so-called <code>robust</code> (Huber or Huber-White) variance
+estimator uses <span class="math display">\[\begin{align}
+\bm{V} &amp;= \sum_{i=1}^N \left[ \frac{\partial \ell(\beta,
+\sigma|\bm{w}_i, \bm{R}_i, \bm{X}_i)}{\partial \beta} \right] \left[
+\frac{\partial \ell(\beta, \sigma|\bm{w}_i, \bm{R}_i,
+\bm{X}_i)}{\partial \beta} \right]^{'} \label{eq:scorebased}
 \end{align}\]</span></p>
-<p>Second, for the <code>cluster robust</code> case, the partial derivatives are summed within the cluster so that <span class="math display">\[\begin{align}
-\bm{V} &amp;= \sum_{c=1}^{n^\prime} \left[ \frac{\partial \ell(\beta, \sigma|\bm{w}_c, \bm{R}_c, \bm{X}_c)}{\partial \beta} \right] \left[ \frac{\partial \ell(\beta, \sigma|\bm{w}_c, \bm{R}_c, \bm{X}_c)}{\partial \beta} \right]^{'}
-\end{align}\]</span> where there are <span class="math inline">\(n^\prime\)</span> clusters, indexed by <span class="math inline">\(c\)</span>, and the partial derivatives are summed within the group of which there are <span class="math inline">\(n_c\)</span> members: <span class="math display">\[\begin{align}
-\frac{\partial \ell(\beta, \sigma|\bm{w}_c, \bm{R}_c, \bm{X}_c)}{\partial \beta} &amp;= \sum_{i=1}^{n_c} \frac{\partial \ell(\beta, \sigma|\bm{w}_i, \bm{R}_i, \bm{X}_i)}{\partial \beta}
+<p>Second, for the <code>cluster robust</code> case, the partial
+derivatives are summed within the cluster so that <span class="math display">\[\begin{align}
+\bm{V} &amp;= \sum_{c=1}^{n^\prime} \left[ \frac{\partial \ell(\beta,
+\sigma|\bm{w}_c, \bm{R}_c, \bm{X}_c)}{\partial \beta} \right] \left[
+\frac{\partial \ell(\beta, \sigma|\bm{w}_c, \bm{R}_c,
+\bm{X}_c)}{\partial \beta} \right]^{'}
+\end{align}\]</span> where there are <span class="math inline">\(n^\prime\)</span> clusters, indexed by <span class="math inline">\(c\)</span>, and the partial derivatives are summed
+within the group of which there are <span class="math inline">\(n_c\)</span> members: <span class="math display">\[\begin{align}
+\frac{\partial \ell(\beta, \sigma|\bm{w}_c, \bm{R}_c,
+\bm{X}_c)}{\partial \beta} &amp;= \sum_{i=1}^{n_c} \frac{\partial
+\ell(\beta, \sigma|\bm{w}_i, \bm{R}_i, \bm{X}_i)}{\partial \beta}
 \end{align}\]</span></p>
-<p>Finally, <code>Dire</code> impelments the survey sampling method called the <code>Taylor series</code> method and uses the same formula as Eq. , but <span class="math inline">\(\bm{V}\)</span> is the estimate of the variance of the score vector (Binder, 1983). Our implementation assumes a two-stage design with <span class="math inline">\(n_a\)</span> primary sampling units (PSUs) in stratum <span class="math inline">\(a\)</span> and summed across the <span class="math inline">\(A\)</span> strata according to <span class="math display">\[\begin{align}
+<p>Finally, <code>Dire</code> impelments the survey sampling method
+called the <code>Taylor series</code> method and uses the same formula
+as Eq. <span class="math inline">\(\ref{eq:sandwich}\)</span>, but <span class="math inline">\(\bm{V}\)</span> is the estimate of the variance of
+the score vector (Binder, 1983). Our implementation assumes a two-stage
+design with <span class="math inline">\(n_a\)</span> primary sampling
+units (PSUs) in stratum <span class="math inline">\(a\)</span> and
+summed across the <span class="math inline">\(A\)</span> strata
+according to <span class="math display">\[\begin{align}
 \bm{V} &amp;= \sum_{a=1}^A \bm{V}_a
-\end{align}\]</span> where <span class="math inline">\(\bm{V}_a\)</span> is a variance estimate for stratum <span class="math inline">\(a\)</span> and is defined by <span class="math display">\[\begin{align}
-\bm{V}_a &amp;= \frac{n_a}{n_a -1} \sum_{p=1}^{n_a} \left( \bm{s}_p - \bar{\bm{s}}_a \right)\left( \bm{s}_p - \bar{\bm{s}}_a \right)' \label{eq:Va}
-\end{align}\]</span> where <span class="math inline">\(s_p\)</span> is the sum of the weighted (or pseudo-) score vector that includes all units in PSU <span class="math inline">\(p\)</span> in stratum <span class="math inline">\(a\)</span> and <span class="math inline">\(\bar{\bm{s}}_a\)</span> is the (unweighted) mean of the <span class="math inline">\(\bm{s}_p\)</span> terms in stratum <span class="math inline">\(a\)</span> so that <span class="math display">\[\begin{align}
-s_p &amp;=\sum_{i \in {\rm PSU} \ p}\frac{\partial \ell(\beta, \sigma|\bm{w}_i, \bm{R}_i, \bm{X}_i)}{\partial \beta}    &amp; \bar{\bm{s}}_a&amp;= \frac{1}{n_a} \sum_{p \in {\rm stratum} \ a} s_p
+\end{align}\]</span> where <span class="math inline">\(\bm{V}_a\)</span>
+is a variance estimate for stratum <span class="math inline">\(a\)</span> and is defined by <span class="math display">\[\begin{align}
+\bm{V}_a &amp;= \frac{n_a}{n_a -1} \sum_{p=1}^{n_a} \left( \bm{s}_p -
+\bar{\bm{s}}_a \right)\left( \bm{s}_p - \bar{\bm{s}}_a \right)'
+\label{eq:Va}
+\end{align}\]</span> where <span class="math inline">\(s_p\)</span> is
+the sum of the weighted (or pseudo-) score vector that includes all
+units in PSU <span class="math inline">\(p\)</span> in stratum <span class="math inline">\(a\)</span> and <span class="math inline">\(\bar{\bm{s}}_a\)</span> is the (unweighted) mean
+of the <span class="math inline">\(\bm{s}_p\)</span> terms in stratum
+<span class="math inline">\(a\)</span> so that <span class="math display">\[\begin{align}
+s_p &amp;=\sum_{i \in {\rm PSU} \ p}\frac{\partial \ell(\beta,
+\sigma|\bm{w}_i, \bm{R}_i, \bm{X}_i)}{\partial \beta}    &amp;
+\bar{\bm{s}}_a&amp;= \frac{1}{n_a} \sum_{p \in {\rm stratum} \ a} s_p
 \end{align}\]</span></p>
-<p>When a stratum has only one PSU, <span class="math inline">\(\bm{V}_a\)</span> is undefined. The best approach is for the analyst to adjust the strata and PSU identifiers, in a manner consistent with the sampling approach, to avoid singleton strata. Two simpler, automated, but less defensible options are available in <code>Dire</code>. First, the strata with single PSUs can be dropped from the variance estimation, yielding an underestimate of the variance.</p>
-<p>The second option is for the singleton stratum to use the overall mean of <span class="math inline">\(s_p\)</span> in place of <span class="math inline">\(\bar{s}_a\)</span>. So, <span class="math display">\[\begin{align}
+<p>When a stratum has only one PSU, <span class="math inline">\(\bm{V}_a\)</span> is undefined. The best approach
+is for the analyst to adjust the strata and PSU identifiers, in a manner
+consistent with the sampling approach, to avoid singleton strata. Two
+simpler, automated, but less defensible options are available in
+<code>Dire</code>. First, the strata with single PSUs can be dropped
+from the variance estimation, yielding an underestimate of the
+variance.</p>
+<p>The second option is for the singleton stratum to use the overall
+mean of <span class="math inline">\(s_p\)</span> in place of <span class="math inline">\(\bar{s}_a\)</span>. So, <span class="math display">\[\begin{align}
 \bar{\bm{s}} &amp;= \frac{1}{n^\prime} \sum s_p
-\end{align}\]</span> where the sum is across all PSUs, and <span class="math inline">\(n^\prime\)</span> is the number of PSUs across all strata. Then, for each singleton stratum, Eq.  becomes <span class="math display">\[\begin{align}
-\bm{V}_a &amp;= 2 \left( \bm{s}_p - \bar{\bm{s}} \right)\left( \bm{s}_p - \bar{\bm{s}} \right)' \label{eq:Va1}
-\end{align}\]</span> where the value 2 is used in place of <span class="math inline">\(\frac{n_a}{n_a-1}\)</span>, which is undefined when <span class="math inline">\(n_a=1\)</span>. This option can underestimate the variance but is thought to more likely overestimate it.</p>
-<p>While not advisable, it is possible to assume information equality where the hessian (eq. ) and the score vector based covariance (eq. ) are equal. When a user sets <code>gradientHessian=TRUE</code> the <code>Dire</code> package uses this short hand in calculating any of the above results. Using this option is necessary to get agreement with the AM software on variance terms.</p>
+\end{align}\]</span> where the sum is across all PSUs, and <span class="math inline">\(n^\prime\)</span> is the number of PSUs across all
+strata. Then, for each singleton stratum, Eq. <span class="math inline">\(\ref{eq:Va}\)</span> becomes <span class="math display">\[\begin{align}
+\bm{V}_a &amp;= 2 \left( \bm{s}_p - \bar{\bm{s}} \right)\left( \bm{s}_p
+- \bar{\bm{s}} \right)' \label{eq:Va1}
+\end{align}\]</span> where the value 2 is used in place of <span class="math inline">\(\frac{n_a}{n_a-1}\)</span>, which is undefined
+when <span class="math inline">\(n_a=1\)</span>. This option can
+underestimate the variance but is thought to more likely overestimate
+it.</p>
+<p>While not advisable, it is possible to assume information equality
+where the hessian (eq. <span class="math inline">\(\ref{eq:vbeta}\)</span>) and the score vector
+based covariance (eq. <span class="math inline">\(\ref{eq:scorebased}\)</span>) are equal. When a
+user sets <code>gradientHessian=TRUE</code> the <code>Dire</code>
+package uses this short hand in calculating any of the above results.
+Using this option is necessary to get agreement with the AM software on
+variance terms.</p>
 <div class="section level3">
 <h3 id="univariate-degrees-of-freedom">Univariate degrees of freedom<a class="anchor" aria-label="anchor" href="#univariate-degrees-of-freedom"></a>
 </h3>
-<p>For the Taylor series estimator, the degrees of freedom estimator also uses the Welch-Satterthwaite (WS) degrees of freedom estimate (<span class="math inline">\(dof_{WS}\)</span>). The WS weights require an estimate of the degrees of variance per independent group. For a clustered sample, that is available at the stratum.</p>
-<p>Following Binder (1983) and Cohen (2002), the contribution <span class="math inline">\(c_s\)</span> to the degrees of freedom from stratum <span class="math inline">\(s\)</span> is defined as <span class="math inline">\(\bm{z}_{uj}\)</span> from the section, “Estimation of Standard Errors of Weighted Means When Plausible Values Are Not Present, Using the Taylor Series Method,” <span class="math display">\[\begin{align}
+<p>For the Taylor series estimator, the degrees of freedom estimator
+also uses the Welch-Satterthwaite (WS) degrees of freedom estimate
+(<span class="math inline">\(dof_{WS}\)</span>). The WS weights require
+an estimate of the degrees of variance per independent group. For a
+clustered sample, that is available at the stratum.</p>
+<p>Following Binder (1983) and Cohen (2002), the contribution <span class="math inline">\(c_s\)</span> to the degrees of freedom from
+stratum <span class="math inline">\(s\)</span> is defined as <span class="math inline">\(\bm{z}_{uj}\)</span> from the section, “Estimation
+of Standard Errors of Weighted Means When Plausible Values Are Not
+Present, Using the Taylor Series Method,” <span class="math display">\[\begin{align}
 c_s = w_s \frac{n_s}{n_s-1} \sum_{u=1}^{n_s} \bm{z}_{uj} \bm{z}_{uj}^T
-\end{align}\]</span> where <span class="math inline">\(u\)</span> indexes the PSUs in the stratum, of which there are <span class="math inline">\(n_s\)</span>, and <span class="math inline">\(w_s\)</span> is the stratum weight, or the sum, in that stratum, of all the unit’s full sample weights. Using the <span class="math inline">\(c_s\)</span> values, the degrees of freedom is <span class="math display">\[\begin{align}
+\end{align}\]</span> where <span class="math inline">\(u\)</span>
+indexes the PSUs in the stratum, of which there are <span class="math inline">\(n_s\)</span>, and <span class="math inline">\(w_s\)</span> is the stratum weight, or the sum, in
+that stratum, of all the unit’s full sample weights. Using the <span class="math inline">\(c_s\)</span> values, the degrees of freedom is
+<span class="math display">\[\begin{align}
 {\rm dof}_{\rm WS} = \frac{\left(\sum c_s \right)^2}{\sum c_s^2}
-\end{align}\]</span> which uses the formula of Satterthwaite (1946), assuming one degree of freedom per stratum.</p>
+\end{align}\]</span> which uses the formula of Satterthwaite (1946),
+assuming one degree of freedom per stratum.</p>
 </div>
 <div class="section level3">
 <h3 id="composite-score-variances">Composite Score Variances<a class="anchor" aria-label="anchor" href="#composite-score-variances"></a>
 </h3>
-<p>In the case of composite scores the variance becomes more complex and only one method is supported, Taylor series.</p>
-<p>The log-likelihood of composite scores is additively separable, the covariances (including the variances) can be calculated in two steps using Eq. . First, the covariance matrix of <span class="math inline">\(\bm{\xi}\)</span> is formed, and then the composite covariance terms are estimated as the variance of a linear combination of the elements of <span class="math inline">\(\bm{\xi}\)</span>.</p>
-<p>In the first step, any of the methods in the section “Variance Estimation” are applied to Eq. , treating <span class="math inline">\(\bm{\xi}\)</span> in the same fashion Eq.  treats <span class="math inline">\(\bm{\beta}\)</span>. This step results in a block diagonal inverse Hessian matrix, with a block for each subscale, and a potentially dense matrix for <span class="math inline">\(\bm{V}\)</span>. Each matrix is square and has <span class="math inline">\(S \cdot (\zeta+1)\)</span> rows and columns, where <span class="math inline">\(\zeta\)</span> is the number of elements in the regression formula (each subscale), to which one is added for the <span class="math inline">\(\sigma\)</span> terms.</p>
+<p>In the case of composite scores the variance becomes more complex and
+only one method is supported, Taylor series.</p>
+<p>The log-likelihood of composite scores is additively separable, the
+covariances (including the variances) can be calculated in two steps
+using Eq. <span class="math inline">\(\ref{eq:lnlcomposite}\)</span>.
+First, the covariance matrix of <span class="math inline">\(\bm{\xi}\)</span> is formed, and then the
+composite covariance terms are estimated as the variance of a linear
+combination of the elements of <span class="math inline">\(\bm{\xi}\)</span>.</p>
+<p>In the first step, any of the methods in the section “Variance
+Estimation” are applied to Eq. <span class="math inline">\(\ref{eq:lnlcomposite}\)</span>, treating <span class="math inline">\(\bm{\xi}\)</span> in the same fashion Eq. <span class="math inline">\(\ref{eq:lnlcomposite}\)</span> treats <span class="math inline">\(\bm{\beta}\)</span>. This step results in a block
+diagonal inverse Hessian matrix, with a block for each subscale, and a
+potentially dense matrix for <span class="math inline">\(\bm{V}\)</span>. Each matrix is square and has
+<span class="math inline">\(S \cdot (\zeta+1)\)</span> rows and columns,
+where <span class="math inline">\(\zeta\)</span> is the number of
+elements in the regression formula (each subscale), to which one is
+added for the <span class="math inline">\(\sigma\)</span> terms.</p>
 <p>This step results in the following matrix: <span class="math display">\[\begin{align}
 {\rm Var}(\bm{\xi})=H(\bm{\xi})^{-1} \bm{V} H(\bm{\xi})^{-1}
 \end{align}\]</span></p>
 <p>For the second step, the composite coefficient then has an <span class="math inline">\(i\)</span>th variance term of <span class="math display">\[\begin{align}
-{\rm Var}(\bm{\xi}_{ci}) &amp;= \bm{e}_i H(\bm{\xi})^{-1} \bm{V} H(\bm{\xi})^{-1} \bm{e}_i
-\end{align}\]</span> where <span class="math inline">\(\bm{\xi}_{ci}\)</span> is the composite coefficient for the <span class="math inline">\(i\)</span>th coefficient, and <span class="math inline">\(\bm{e}_{i}\)</span> is the vector of weights arranged such that <span class="math display">\[\begin{align}
+{\rm Var}(\bm{\xi}_{ci}) &amp;= \bm{e}_i H(\bm{\xi})^{-1} \bm{V}
+H(\bm{\xi})^{-1} \bm{e}_i
+\end{align}\]</span> where <span class="math inline">\(\bm{\xi}_{ci}\)</span> is the composite
+coefficient for the <span class="math inline">\(i\)</span>th
+coefficient, and <span class="math inline">\(\bm{e}_{i}\)</span> is the
+vector of weights arranged such that <span class="math display">\[\begin{align}
 \bm{\xi}_{ci} = \bm{e}_{i}^T \bm{\xi}
 \end{align}\]</span> The covariance between two terms, <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span><em>,</em> is a simple extension <span class="math display">\[\begin{align}
-{\rm Cov}(\bm{\beta}_{ci}, \bm{\beta}_{cj}) &amp;= \bm{e}_i H(\bm{\beta})^{-1} \bm{V} H(\bm{\beta})^{-1} \bm{e}_j
+{\rm Cov}(\bm{\beta}_{ci}, \bm{\beta}_{cj}) &amp;= \bm{e}_i
+H(\bm{\beta})^{-1} \bm{V} H(\bm{\beta})^{-1} \bm{e}_j
 \end{align}\]</span> which uses the definition, <span class="math display">\[\begin{align}
 \bm{\xi}_{cj} &amp;= \bm{e}_{j}^T \bm{\xi}
 \end{align}\]</span></p>
-<p>A simple example may help clarify. Imagine a composite score composed of two subscales, 1 and 2, with weights <span class="math inline">\(\omega_1 = 0.4\)</span> and <span class="math inline">\(\omega_2=0.6\)</span>. Supposed a user is interested in a regression of the form <span class="math display">\[\begin{align}
+<p>A simple example may help clarify. Imagine a composite score composed
+of two subscales, 1 and 2, with weights <span class="math inline">\(\omega_1 = 0.4\)</span> and <span class="math inline">\(\omega_2=0.6\)</span>. Supposed a user is
+interested in a regression of the form <span class="math display">\[\begin{align}
 \theta = a + x_1 \cdot b + \epsilon \label{eq:compex} \\
 \epsilon \sim N(0,\sigma)
-\end{align}\]</span> Then the regression in Eq.  would be fit once for subscale 1 and once for subscale 2; the first fit would yield estimated values <span class="math inline">\(\left\{ a_1, b_1, \sigma_1 \right\}\)</span>, and the second fit would yield <span class="math inline">\(\left\{ a_2, b_2, \sigma_2 \right\}\)</span>. The estimated value, for example, <span class="math inline">\(a_c\)</span>, would be <span class="math inline">\(a_c = 0.4\cdot\alpha_1 + 0.6\cdot\alpha_2\)</span>. By stacking the estimates together, <span class="math display">\[\begin{align}
+\end{align}\]</span> Then the regression in Eq. <span class="math inline">\(\ref{eq:compex}\)</span> would be fit once for
+subscale 1 and once for subscale 2; the first fit would yield estimated
+values <span class="math inline">\(\left\{ a_1, b_1, \sigma_1
+\right\}\)</span>, and the second fit would yield <span class="math inline">\(\left\{ a_2, b_2, \sigma_2 \right\}\)</span>. The
+estimated value, for example, <span class="math inline">\(a_c\)</span>,
+would be <span class="math inline">\(a_c = 0.4\cdot\alpha_1 +
+0.6\cdot\alpha_2\)</span>. By stacking the estimates together, <span class="math display">\[\begin{align}
 \bm{\theta} &amp;= \begin{bmatrix}
- a_1 \\
- b_1 \\
- \sigma_1\\
- a_2 \\
- b_2\\
- \sigma_2
+a_1 \\
+b_1 \\
+\sigma_1\\
+a_2 \\
+b_2\\
+\sigma_2
 \end{bmatrix}
-\end{align}\]</span> the covariance matrix can then be estimated and will result in a matrix <span class="math inline">\(\bm{\Omega} \equiv {\rm Var}(\bm{\beta})\)</span> from Eq.  that has six rows and six columns. Using the vector <span class="math display">\[\begin{align}
+\end{align}\]</span> the covariance matrix can then be estimated and
+will result in a matrix <span class="math inline">\(\bm{\Omega} \equiv
+{\rm Var}(\bm{\beta})\)</span> from Eq. <span class="math inline">\(\ref{eq:vbeta}\)</span> that has six rows and six
+columns. Using the vector <span class="math display">\[\begin{align}
 \bm{e}_1 &amp;= \begin{bmatrix}
- 0.4 \\
- 0 \\
- 0\\
- 0.6 \\
- 0\\
- 0
+0.4 \\
+0 \\
+0\\
+0.6 \\
+0\\
+0
 \end{bmatrix}
-\end{align}\]</span> it can easily be confirmed that <span class="math inline">\(a_c = \bm{e}_1^T \bm{\xi}\)</span>, so <span class="math inline">\({\rm Var}(a_c)= \bm{e}_1^T \bm{\Omega} \bm{e}_1\)</span>.</p>
+\end{align}\]</span> it can easily be confirmed that <span class="math inline">\(a_c = \bm{e}_1^T \bm{\xi}\)</span>, so <span class="math inline">\({\rm Var}(a_c)= \bm{e}_1^T \bm{\Omega}
+\bm{e}_1\)</span>.</p>
 </div>
 <div class="section level3">
 <h3 id="composite-degrees-of-freedom">Composite degrees of freedom<a class="anchor" aria-label="anchor" href="#composite-degrees-of-freedom"></a>
@@ -238,42 +510,94 @@ c_s = w_s \frac{n_s}{n_s-1} \sum_{u=1}^{n_s} \bm{z}_{uj} \bm{z}_{uj}^T
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<p>Binder, D. A. (1983). On the variances of asymptotically normal estimators from complex surveys. <em>International Statistical Review</em>, <em>51</em>(3), 279–292.</p>
-<p>Black, P. E. (2019). Big-O notation. In P. E. Black (Ed.), <em>Dictionary of algorithms and data structures</em>. Washington, DC: National Institute of Standards and Technology. Retrieved from <a href="https://www.nist.gov/dads/HTML/bigOnotation.html" class="external-link uri">https://www.nist.gov/dads/HTML/bigOnotation.html</a></p>
-<p>Cohen, J. D., &amp; Jiang, T. (1999). Comparison of partially measured latent traits across nominal subgroups. <em>Journal of the American Statistical Association</em>, 94(<em>448</em>), 1035–1044.</p>
-<p>Green, W. H. (2003). <em>Econometric analysis</em> Upper Saddle River, NJ: Prentice Hall.</p>
-<p>Huber, P. J. (1967). The behavior of maximum likelihood estimates under nonstandard conditions. <em>Proceedings of the Fifth Berkeley Symposium of Mathematical Statistics and Probability</em>, Vol. I: <em>Statistics</em> (pp. 221–233). Berkeley, CA: University of California Press.</p>
-<p>Johnson, S. G. (2010). <em>Notes on the convergence of trapezoidal-rule quadrature</em>. Retrieved from <a href="https://math.mit.edu/~stevenj/trapezoidal.pdf" class="external-link uri">https://math.mit.edu/~stevenj/trapezoidal.pdf</a></p>
-<p>McCullagh, P. &amp; Nelder, J. A. (1989). <em>Generalized linear models</em>. (2nd ed.). London, UK: Chapman &amp; Hall/CRC.</p>
-<p>NAEP. (2008). The generalized partial credit model [NAEP Technical Documentation Website]. Retrieved from <a href="https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_models_gen.aspx" class="external-link uri">https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_models_gen.aspx</a>.</p>
-<p>White, H. (1980). A heteroskedasticity-consistent covariance matrix estimator and a direct test for heteroskedasticity. <em>Econometrica</em>, 48(<em>4</em>), 817–838.</p>
+<p>Binder, D. A. (1983). On the variances of asymptotically normal
+estimators from complex surveys. <em>International Statistical
+Review</em>, <em>51</em>(3), 279–292.</p>
+<p>Black, P. E. (2019). Big-O notation. In P. E. Black (Ed.),
+<em>Dictionary of algorithms and data structures</em>. Washington, DC:
+National Institute of Standards and Technology. Retrieved from <a href="https://www.nist.gov/dads/HTML/bigOnotation.html" class="external-link uri">https://www.nist.gov/dads/HTML/bigOnotation.html</a></p>
+<p>Cohen, J. D., &amp; Jiang, T. (1999). Comparison of partially
+measured latent traits across nominal subgroups. <em>Journal of the
+American Statistical Association</em>, 94(<em>448</em>), 1035–1044.</p>
+<p>Green, W. H. (2003). <em>Econometric analysis</em> Upper Saddle
+River, NJ: Prentice Hall.</p>
+<p>Huber, P. J. (1967). The behavior of maximum likelihood estimates
+under nonstandard conditions. <em>Proceedings of the Fifth Berkeley
+Symposium of Mathematical Statistics and Probability</em>, Vol. I:
+<em>Statistics</em> (pp. 221–233). Berkeley, CA: University of
+California Press.</p>
+<p>Johnson, S. G. (2010). <em>Notes on the convergence of
+trapezoidal-rule quadrature</em>. Retrieved from <a href="https://math.mit.edu/~stevenj/trapezoidal.pdf" class="external-link uri">https://math.mit.edu/~stevenj/trapezoidal.pdf</a></p>
+<p>McCullagh, P. &amp; Nelder, J. A. (1989). <em>Generalized linear
+models</em>. (2nd ed.). London, UK: Chapman &amp; Hall/CRC.</p>
+<p>NAEP. (2008). The generalized partial credit model [NAEP Technical
+Documentation Website]. Retrieved from <a href="https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_models_gen.aspx" class="external-link uri">https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_models_gen.aspx</a>.</p>
+<p>White, H. (1980). A heteroskedasticity-consistent covariance matrix
+estimator and a direct test for heteroskedasticity.
+<em>Econometrica</em>, 48(<em>4</em>), 817–838.</p>
 </div>
 <div class="section level2">
 <h2 id="appendix--test-probability-density-functions">Appendix. Test Probability Density Functions<a class="anchor" aria-label="anchor" href="#appendix--test-probability-density-functions"></a>
 </h2>
-<p>For all cases scored as either correct or incorrect, we use the <em>three parameter logit</em> (3PL) model: <span class="math display">\[\begin{align}
-\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= g_j + \frac{1-g_j}{1+\exp\left[ -D \, a_j \, (\theta_i - d_j)\right]} \label{eq:3PL}
-\end{align}\]</span> where <span class="math inline">\(g_j\)</span> is the guessing parameter, <span class="math inline">\(a_j\)</span> is the discrimination factor, <span class="math inline">\(d_j\)</span> is the item difficulty, and <span class="math inline">\(D\)</span> is a constant, usually set to 1.7, to map the <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(d_j\)</span> terms to a probit-like space; this term is applied by tradition.</p>
-<p>When a <em>two parameter logit</em> (2PL) is used, Eq.  is modified to omit <span class="math inline">\(g_j\)</span> (effectively setting it to zero): <span class="math display">\[\begin{align}
-\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{1}{1+\exp\left[ -D \, a_j \, (\theta_i - d_j)\right]} \label{eq:2PL}
+<p>For all cases scored as either correct or incorrect, we use the
+<em>three parameter logit</em> (3PL) model: <span class="math display">\[\begin{align}
+\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= g_j +
+\frac{1-g_j}{1+\exp\left[ -D \, a_j \, (\theta_i - d_j)\right]}
+\label{eq:3PL}
+\end{align}\]</span> where <span class="math inline">\(g_j\)</span> is
+the guessing parameter, <span class="math inline">\(a_j\)</span> is the
+discrimination factor, <span class="math inline">\(d_j\)</span> is the
+item difficulty, and <span class="math inline">\(D\)</span> is a
+constant, usually set to 1.7, to map the <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(d_j\)</span> terms to a probit-like space; this
+term is applied by tradition.</p>
+<p>When a <em>two parameter logit</em> (2PL) is used, Eq. <span class="math inline">\(\ref{eq:3PL}\)</span> is modified to omit <span class="math inline">\(g_j\)</span> (effectively setting it to zero):
+<span class="math display">\[\begin{align}
+\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{1}{1+\exp\left[ -D \,
+a_j \, (\theta_i - d_j)\right]} \label{eq:2PL}
 \end{align}\]</span></p>
-<p>When a <em>Rasch model</em> is used, Eq.  is further modified to set all <span class="math inline">\(a_j\)</span> to a single <span class="math inline">\(a\)</span><em>,</em> and <span class="math inline">\(D\)</span> is set to one. <span class="math display">\[\begin{align}
-\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{1}{1+\exp\left[ - a \, (\theta_i - d_j)\right]} \label{eq:Rasch}
+<p>When a <em>Rasch model</em> is used, Eq. <span class="math inline">\(\ref{eq:2PL}\)</span> is further modified to set
+all <span class="math inline">\(a_j\)</span> to a single <span class="math inline">\(a\)</span><em>,</em> and <span class="math inline">\(D\)</span> is set to one. <span class="math display">\[\begin{align}
+\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{1}{1+\exp\left[ - a \,
+(\theta_i - d_j)\right]} \label{eq:Rasch}
 \end{align}\]</span></p>
-<p>The <em>Graded Response Model</em> (GRM) has a probability density that generalizes an ordered logit (McCullagh &amp; Nelder, 1989): <span class="math display">\[\begin{align}
-\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{1}{1+\exp\left[-D\, a_j \, (\theta_i - d_{R_{ij},j})\right]} - \frac{1}{1+\exp\left[-D\, a_j \, (\theta_i - d_{1+R_{ij},j})\right]} \label{eq:grm}
-\end{align}\]</span> Here the parameters <span class="math inline">\(\bm{P}_j\)</span> are the cut points <span class="math inline">\(d_{cj}\)</span>, where <span class="math inline">\(d_{0j}=-\infty\)</span> and <span class="math inline">\(d_{C+1,j}=\infty\)</span>. In the first term on the right side of Eq. , the subscript <span class="math inline">\(R_{ij}\)</span> on <span class="math inline">\(d_{R_{ij},j}\)</span> indicates it is the cut point associated with the response level to item <span class="math inline">\(j\)</span> for person <span class="math inline">\(i\)</span>, whereas the last subscript (<span class="math inline">\(j\)</span>) indicates that it is the <span class="math inline">\(d\)</span> term for item <span class="math inline">\(j\)</span>. In the second term, the cut point above that cut point is used.</p>
-<p>The <em>Generalized Partial Credit Model</em> (GPCM) has a probability density that generalizes a multinomial logit (McCullagh &amp; Nelder, 1989) <span class="math display">\[\begin{align}
-\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{\exp \left[ \sum_{c=0}^{R_{ij}} D a_j (\theta_i - d_{cj}) \right]}{\sum_{r=0}^{C} \exp \left[ \sum_{c=0}^{r} D a_j (\theta_i - d_{cj}) \right]}
-\end{align}\]</span> where <span class="math inline">\(c\)</span> indexes cut points, of which there are <span class="math inline">\(C\)</span><em>,</em> and <span class="math inline">\(j\)</span> indexes the item.</p>
-<p>The GPCM equation has an indeterminancy because all <span class="math inline">\(d_j\)</span> terms could increase and make the values of the probability the same. We can solve the indeterminacy in several ways.</p>
+<p>The <em>Graded Response Model</em> (GRM) has a probability density
+that generalizes an ordered logit (McCullagh &amp; Nelder, 1989): <span class="math display">\[\begin{align}
+\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{1}{1+\exp\left[-D\, a_j
+\, (\theta_i - d_{R_{ij},j})\right]} - \frac{1}{1+\exp\left[-D\, a_j \,
+(\theta_i - d_{1+R_{ij},j})\right]} \label{eq:grm}
+\end{align}\]</span> Here the parameters <span class="math inline">\(\bm{P}_j\)</span> are the cut points <span class="math inline">\(d_{cj}\)</span>, where <span class="math inline">\(d_{0j}=-\infty\)</span> and <span class="math inline">\(d_{C+1,j}=\infty\)</span>. In the first term on
+the right side of Eq. <span class="math inline">\(\ref{eq:grm}\)</span>,
+the subscript <span class="math inline">\(R_{ij}\)</span> on <span class="math inline">\(d_{R_{ij},j}\)</span> indicates it is the cut
+point associated with the response level to item <span class="math inline">\(j\)</span> for person <span class="math inline">\(i\)</span>, whereas the last subscript (<span class="math inline">\(j\)</span>) indicates that it is the <span class="math inline">\(d\)</span> term for item <span class="math inline">\(j\)</span>. In the second term, the cut point
+above that cut point is used.</p>
+<p>The <em>Generalized Partial Credit Model</em> (GPCM) has a
+probability density that generalizes a multinomial logit (McCullagh
+&amp; Nelder, 1989) <span class="math display">\[\begin{align}
+\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{\exp \left[
+\sum_{c=0}^{R_{ij}} D a_j (\theta_i - d_{cj}) \right]}{\sum_{r=0}^{C}
+\exp \left[ \sum_{c=0}^{r} D a_j (\theta_i - d_{cj}) \right]}
+\end{align}\]</span> where <span class="math inline">\(c\)</span>
+indexes cut points, of which there are <span class="math inline">\(C\)</span><em>,</em> and <span class="math inline">\(j\)</span> indexes the item.</p>
+<p>The GPCM equation has an indeterminancy because all <span class="math inline">\(d_j\)</span> terms could increase and make the
+values of the probability the same. We can solve the indeterminacy in
+several ways.</p>
 <p>NAEP (2008) uses a mean difficulty (<span class="math inline">\(b_j\)</span>), and the <span class="math inline">\(d_j\)</span> values are then given by <span class="math display">\[\begin{align}
-d_{0j} &amp;= 0 &amp;       d_{cj} &amp;= b_j - \delta_{jc} \, ; \, 1 \leq c \leq C
-\end{align}\]</span> where the <span class="math inline">\(\delta_{jc}\)</span> values are estimated so that <span class="math inline">\(0=\sum_{c=1}^{C} \delta_{jc}\)</span>. In this package, when the <code>polyParamTab</code> has an <code>itemLocation</code>, it serves as <code>b</code>. When there is no <code>itemLocation</code>, the package uses the <span class="math inline">\(\delta\)</span> values directly <span class="math display">\[\begin{align}
-d_{0j} &amp;= 0 &amp;       d_{cj} &amp;= \delta_{jc} \, ; \, 1 \leq c \leq C
+d_{0j} &amp;= 0 &amp;       d_{cj} &amp;= b_j - \delta_{jc} \, ; \, 1
+\leq c \leq C
+\end{align}\]</span> where the <span class="math inline">\(\delta_{jc}\)</span> values are estimated so that
+<span class="math inline">\(0=\sum_{c=1}^{C} \delta_{jc}\)</span>. In
+this package, when the <code>polyParamTab</code> has an
+<code>itemLocation</code>, it serves as <code>b</code>. When there is no
+<code>itemLocation</code>, the package uses the <span class="math inline">\(\delta\)</span> values directly <span class="math display">\[\begin{align}
+d_{0j} &amp;= 0 &amp;       d_{cj} &amp;= \delta_{jc} \, ; \, 1 \leq c
+\leq C
 \end{align}\]</span></p>
-<p>When a <em>Partial Credit Model</em> (PCM) is used, and the value of <span class="math inline">\(D\)</span> is set to one, whereas <span class="math inline">\(a_j\)</span> is again shared across all items. So <span class="math display">\[\begin{align}
-\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{\exp \left[ \sum_{c=0}^{R_{ij}} a (\theta_i - d_{cj}) \right]}{\sum_{r=0}^{C} \exp \left[ \sum_{c=0}^{r} a (\theta_i - d_{cj}) \right]}
+<p>When a <em>Partial Credit Model</em> (PCM) is used, and the value of
+<span class="math inline">\(D\)</span> is set to one, whereas <span class="math inline">\(a_j\)</span> is again shared across all items. So
+<span class="math display">\[\begin{align}
+\Pr(\bm{R}_{ij}|\theta_i, \bm{P}_j) &amp;= \frac{\exp \left[
+\sum_{c=0}^{R_{ij}} a (\theta_i - d_{cj}) \right]}{\sum_{r=0}^{C} \exp
+\left[ \sum_{c=0}^{r} a (\theta_i - d_{cj}) \right]}
 \end{align}\]</span></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -289,7 +613,7 @@ d_{0j} &amp;= 0 &amp;       d_{cj} &amp;= \delta_{jc} \, ; \, 1 \leq c \leq C
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
     </footer>

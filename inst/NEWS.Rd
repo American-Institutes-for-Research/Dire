@@ -1,10 +1,18 @@
 \name{NEWS}
 \title{NEWS for Dire}
 
+\section{Changes in version 2.1.9000}{
+  \subsection{Methods update}{
+    \itemize{
+      \item Functions are a bit clearer about some errors when data sets do not agree. In particular, when a PSU/stratum variable is missing and \code{Taylor} variace is selected it gives a plain language error.
+    }
+  }
+}
+
 \section{Changes in version 2.1.1}{
   \subsection{BUG FIXES}{
     \itemize{
-      \item Fixed bug in degrees of freedom replication in composite
+      \item Fixed bug in degrees of freedom replication in composite. This causes summary to fail in many cases.
       \item Fixed version number error in this file. 2.1.0 changes had previously been named 2.0.0.
     }
   }

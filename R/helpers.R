@@ -73,13 +73,13 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
   # get varType and singletonFix cleaned up
   singletonFix <- match.arg(singletonFix)
   if(is.null(strataVar)) {
-    if(is.null(object$strataVar) & varType %in% c("Partial Taylor")) {
+    if(is.null(object$strataVar) & varType %in% c("Taylor", "Partial Taylor")) {
       stop(paste0("argument ", dQuote("strataVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
     }
     strataVar <- object$strataVar
   }
   if(is.null(PSUVar)) {
-    if(is.null(object$PSUVar) & varType %in% c("Partial Taylor")) {
+    if(is.null(object$PSUVar) & varType %in% c("Taylor", "Partial Taylor")) {
       stop(paste0("argument ", dQuote("PSUVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
     }
     PSUVar <- object$PSUVar

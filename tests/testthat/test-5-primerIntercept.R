@@ -1,6 +1,7 @@
 # AM Results updated on 10/15/2020
 skip_on_cran()
 context("NAEPPrimer composite")
+skip_if_not_installed("EdSurvey")
 require(EdSurvey)
 
 ## Dichotomous Parameter Tab 
