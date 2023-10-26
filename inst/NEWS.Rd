@@ -1,10 +1,16 @@
 \name{NEWS}
 \title{NEWS for Dire}
 
-\section{Changes in version 2.1.9000}{
+\section{Changes in version 2.2.0}{
   \subsection{Methods update}{
     \itemize{
-      \item Functions are a bit clearer about some errors when data sets do not agree. In particular, when a PSU/stratum variable is missing and \code{Taylor} variace is selected it gives a plain language error.
+      \item Functions are a bit clearer about some errors when data sets do not agree. In particular, when a PSU/stratum variable is missing and \code{Taylor} variance is selected it gives a plain language error.
+      \item turning on \code{multiCore} now fits the latent regressions with multiple cores too. Previously it would only fit the covariance matrix with multiple cores.
+      \item added a nearly singular model check
+      \item allow \code{stuDat} to have students that are not on the item data without throwing an error.
+      \item optimization tries to avoid Newton's method by using the \code{lbfgs} package which allows for a condition on the gradient to be set. Newton's method can be very slow for large datasets.
+      \item when Newton's method is used, the output is more verbose.
+      \item the C++ implementation of the Hessian has been sped up a bit.
     }
   }
 }

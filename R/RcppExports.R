@@ -37,6 +37,10 @@ calcHess <- function(K, rr2, rr2_, trr2mxb, X_, nodesminusXB, w, s2, s_) {
     .Call(`_Dire_calcHess`, K, rr2, rr2_, trr2mxb, X_, nodesminusXB, w, s2, s_)
 }
 
+calcHessOld <- function(K, rr2, rr2_, trr2mxb, X_, nodesminusXB, w, s2, s_) {
+    .Call(`_Dire_calcHessOld`, K, rr2, rr2_, trr2mxb, X_, nodesminusXB, w, s2, s_)
+}
+
 calcRrij <- function(i, j, rr1fi, rr2fj, detSigma, mvnResid) {
     .Call(`_Dire_calcRrij`, i, j, rr1fi, rr2fj, detSigma, mvnResid)
 }

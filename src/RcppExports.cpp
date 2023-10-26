@@ -142,6 +142,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// calcHessOld
+arma::mat calcHessOld(int K, arma::mat rr2, arma::mat rr2_, arma::mat trr2mxb, arma::mat X_, arma::mat nodesminusXB, arma::vec w, double s2, double s_);
+RcppExport SEXP _Dire_calcHessOld(SEXP KSEXP, SEXP rr2SEXP, SEXP rr2_SEXP, SEXP trr2mxbSEXP, SEXP X_SEXP, SEXP nodesminusXBSEXP, SEXP wSEXP, SEXP s2SEXP, SEXP s_SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type rr2(rr2SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type rr2_(rr2_SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type trr2mxb(trr2mxbSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type X_(X_SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type nodesminusXB(nodesminusXBSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type w(wSEXP);
+    Rcpp::traits::input_parameter< double >::type s2(s2SEXP);
+    Rcpp::traits::input_parameter< double >::type s_(s_SEXP);
+    rcpp_result_gen = Rcpp::wrap(calcHessOld(K, rr2, rr2_, trr2mxb, X_, nodesminusXB, w, s2, s_));
+    return rcpp_result_gen;
+END_RCPP
+}
 // calcRrij
 NumericVector calcRrij(int i, int j, NumericMatrix rr1fi, NumericMatrix rr2fj, double detSigma, NumericVector mvnResid);
 RcppExport SEXP _Dire_calcRrij(SEXP iSEXP, SEXP jSEXP, SEXP rr1fiSEXP, SEXP rr2fjSEXP, SEXP detSigmaSEXP, SEXP mvnResidSEXP) {
@@ -169,6 +188,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_Dire_grSum2", (DL_FUNC) &_Dire_grSum2, 6},
     {"_Dire_matTimesVec", (DL_FUNC) &_Dire_matTimesVec, 2},
     {"_Dire_calcHess", (DL_FUNC) &_Dire_calcHess, 9},
+    {"_Dire_calcHessOld", (DL_FUNC) &_Dire_calcHessOld, 9},
     {"_Dire_calcRrij", (DL_FUNC) &_Dire_calcRrij, 6},
     {NULL, NULL, 0}
 };

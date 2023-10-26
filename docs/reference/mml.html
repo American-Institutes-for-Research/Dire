@@ -16,7 +16,7 @@ ability. Includes a variety of variance estimation strategies."><!-- mathjax -->
     
     <a class="navbar-brand me-2" href="../index.html">Dire</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,8 +95,11 @@ object in the style of <code><a href="https://rdrr.io/r/stats/lm.html" class="ex
 
 
 <dt>stuItems</dt>
-<dd><p>a list where each element is named a student ID and contains
-a <code>data.frame</code>; see Details for the format</p></dd>
+<dd><p>a <code>data.frame</code> where each row represents a single student's response to one item.
+The columns must include the <code>idVar</code> column, a <code>key</code> column, and a
+<code>score</code> column. Values in the <code>score</code> column are checked against expectations
+(based on <code>dichotParamTab</code> and <code>polyParamTab</code>) and when
+<code>verbose</code> is &gt;= 1 a table of expected and actual levels is printed.</p></dd>
 
 
 <dt>stuDat</dt>
@@ -290,7 +293,7 @@ shift to all of these and this shift is applied when there is a column named
 <code>itemLocation</code> by simply adding that to every <code>d*</code> column. Items
 are not included in the likelihood for an individual when their value on <code>stuItems</code>
 is <code>NA</code>, but no provision is made for guessing, nor special provision for 
-missing codes in polytimious items.</p>
+missing codes in polytomous items.</p>
 <p>For both <code>dichotParamTab</code> and <code>polyParamTab</code> users wishing
 to use a <code>D</code> paramter of 1.7 (or any other value) may specify that, per item,
 in a column named <code>D</code>.</p>

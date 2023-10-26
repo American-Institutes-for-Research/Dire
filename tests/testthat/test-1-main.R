@@ -8,7 +8,6 @@ n <- 2000
 theta <- rnorm(n)
 x1 <- runif(n)
 theta <- theta + x1 * 0.2
-mean(theta)
 # function to generate data
 gen <- function(dParamsTab, theta, key) {
   # get parameter values from items
@@ -76,7 +75,7 @@ test_that("simple univariate", {
 
 context("mml errors") 
 test_that("mml errors", {
-  expect_error(mml1 <- mml(composite ~ 1, stuItems=stuItems[1:100,], stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat), "pseudo-student101") 
+  expect_error(mml1 <- mml(composite ~ 1, stuItems=stuItems[1:100,], stuDat=stuDat, dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat), "relevant") 
   expect_error(mml1 <- mml(composite ~ 1, stuItems=stuItems, stuDat=stuDat[-11,], dichotParamTab=dichotParamTab, Q=34, idVar="oppID", testScale=testDat), "pseudo-student11")
   stuItems2 <- stuItems
   stuItems2$score[stuItems2$key == "m046501"] <- sample(0:2, sum(stuItems2$key == "m046501"), replace=TRUE)

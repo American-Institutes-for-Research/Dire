@@ -31,8 +31,11 @@ mml(
 \item{formula}{a \ifelse{latex}{\code{formula}}{\code{\link[stats]{formula}}}
 object in the style of \ifelse{latex}{\code{lm}}{\code{\link[stats]{lm}}}}
 
-\item{stuItems}{a list where each element is named a student ID and contains
-a \code{data.frame}; see Details for the format}
+\item{stuItems}{a \code{data.frame} where each row represents a single student's response to one item.
+The columns must include the \code{idVar} column, a \code{key} column, and a
+\code{score} column. Values in the \code{score} column are checked against expectations
+(based on \code{dichotParamTab} and \code{polyParamTab}) and when
+\code{verbose} is >= 1 a table of expected and actual levels is printed.}
 
 \item{stuDat}{a \code{data.frame} with a single row per student. Predictors in
 the \code{formula} must be in \code{stuDat}.}
@@ -202,7 +205,7 @@ shift to all of these and this shift is applied when there is a column named
 \code{itemLocation} by simply adding that to every \code{d*} column. Items
 are not included in the likelihood for an individual when their value on \code{stuItems}
 is \code{NA}, but no provision is made for guessing, nor special provision for 
-missing codes in polytimious items.
+missing codes in polytomous items.
 
 For both \code{dichotParamTab} and \code{polyParamTab} users wishing
 to use a \code{D} paramter of 1.7 (or any other value) may specify that, per item,

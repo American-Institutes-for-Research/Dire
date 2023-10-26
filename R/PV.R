@@ -73,8 +73,7 @@ drawPVs.mmlMeans <- function(x, npv=5L,
   if(npv <= 0) {
     stop("Must generate a positive number of plausible values.")
   }
-  
-  beta <- x$coefficients
+  beta <- x$coef#ficients
   if(inherits(beta, "matrix")) {
     beta <- x$latentCoef
   }
@@ -241,7 +240,7 @@ getMMLCBeta <- function(x) {
   if(inherits(x, "summary.mmlCompositeMeans")) {
     return(x$rawCoef)
   }
-  return(x$coefficients)
+  return(x$coef)
 }
 
 

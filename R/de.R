@@ -235,17 +235,16 @@ mml <- function(formula,
   }
   # check for parrallel if multiCore True 
   if(multiCore == TRUE){
-    # check parallel
-    if(!requireNamespace("parallel")) {
-      message("Unable to load package parallel, setting multiCore to FALSE. Install parallel to use multiCore option.")
-      multiCore <- FALSE
-    }
+    # check for doParallel
     if(!requireNamespace("doParallel")) {
       message("Unable to load package doParallel, setting multiCore to FALSE. Install doParallel to use multiCore option.")
       multiCore <- FALSE
+    } else {
+      # always use C++ version when multicore
+      fast <- TRUE
     }
   }
-  
+    
   call <- match.call()
   polyModel <- match.arg(polyModel)
   polyModel <- tolower(polyModel)
@@ -268,9 +267,11 @@ mml <- function(formula,
   pptd <- cleanPolyParamTab(polyParamTab)
   paramTab <- condenseParamTab(dichotParamTab, pptd$polyParamTab, pptd$dvars)
   
+  # save a copy of the raw stuItems for potential composite call
+  stuItems0 <- stuItems
   stuItems <- cleanStuItems(stuItems, stuDat, idVar)
-  stuDat[[idVar]] <- as.character(stuDat[[idVar]])
-  stuDat <- stuDat[order(stuDat[[idVar]]), ]
+  stuDat <- cleanStuDat(stuDat, stuItems, idVar)
+
   # overall: boolean for if this is a test (multiple subtest)
   # assume not, check if TRUE later
   overall <- FALSE 
@@ -340,8 +341,9 @@ mml <- function(formula,
     Convergence <- c()
     subt <- c()
     resl <- list()
-    s <- c()
-    posteriorEsts <- data.frame()
+    stdev <- c()
+    posteriorEsts<- data.frame()
+    calls <- list()
     for(sti in 1:length(subtests)) {
       subt <- c(subt, subtests[sti])
       termLabels <- attr(terms(formula), "term.labels")
@@ -353,56 +355,117 @@ mml <- function(formula,
       calli$formula <- formulai
       # this resolves any lazy unresolved calls in variables
       calli$stuItems <- stuItems
+      calli$stuDat <- stuDat
+      calli$dichotParamTab <- dichotParamTab
+      calli$polyParamTab <- polyParamTab
       calli$testScale <- testScale
       calli$strataVar <- strataVar
       calli$PSUVar <- PSUVar
       # this subtest will not itself be a composite
       calli$composite <- FALSE
+      # we multicore on the outer loop, not inner
+      calli$multiCore <- FALSE
+      calls <- c(calls, list(calli))
+    }
+    
+    if(multiCore) {
       if(verbose >= 1) {
         cat("\n")
-        message(paste0("Estimating construct ", dQuote(subtests[sti])))
+        message(paste0("Estimating constructs in parallel."))
       }
-      resi <- eval(calli)
-      nidv <- colnames(resi$posteriorEsts) != "id" # non id variable names
-      colnames(resi$posteriorEsts)[nidv] <-  make.names(paste0(colnames(resi$posteriorEsts)[nidv], "_", subtests[sti]))
+      itc <- iter(calls)
+      resL <- foreach(dopari=itc) %dopar% {
+        res <- eval(dopari)
+        calliName <- call
+        calliName$formula <- formulai
+        res$call <- calliName
+        return(res)
+      }
+    } else {
+      resL <- list()
+      for(i in 1:length(calls)) {
+        if(verbose >= 1) {
+          cat("\n")
+          message(paste0("Estimating construct ", dQuote(subtests[i])))
+        }
+        calli <- calls[[i]]
+        res <- eval(calli)
+        calliName <- call
+        calliName$composite <- FALSE
+        calliName$formula <- formulai
+        res$call <- calliName
+        resL <- c(resL, list(eval(calli)))
+      }
+    }
+    names(resL) <- subtests
+    # nodes are all the same
+    nodes <- resL[[1]]$nodes
+    k <- length(resL[[1]]$coefficients)
+    for(sti in 1:length(resL)) {
+      # fix posteriors
+      #pei <- resL[[sti]]$posteriorEsts
+      nidv <- colnames(resL[[sti]]$posteriorEsts) != "id" # non id variable names
+      colnames(resL[[sti]]$posteriorEsts)[nidv] <- make.names(paste0(colnames(resL[[sti]]$posteriorEsts)[nidv], "_", subtests[sti]))
       if(sti == 1) {
-        posteriorEsts <- resi$posteriorEsts
+        posteriorEsts <- resL[[sti]]$posteriorEsts
       } else {
-        posteriorEsts <- merge(posteriorEsts, resi$posteriorEsts, by="id", all=TRUE)
+        posteriorEsts <- merge(posteriorEsts, resL[[sti]]$posteriorEsts, by="id", all=TRUE)
       }
-      # the call is stored very inefficiently and is removed
-      calliName <- call
-      calliName$composite <- FALSE
-      calliName$formula <- formulai
-      resi[["call"]] <- calliName
-      resl <- c(resl, list(resi))
-      co <- resi$coefficients
+      # remove, condensation complete
+      resL[[sti]]$posteriorEsts <- NULL
+      # get Xb
+      co <- resL[[sti]]$coefficients
       # remove standard deviation
-      Xbi <- as.vector(resi$X %*% co[-length(co)])
-      Xbdf <- data.frame(id=rownames(resi$X), xb=Xbi, stringsAsFactors=FALSE)
-      colnames(Xbdf)[2] <- paste0("Xb",sti)
+      Xbi <- as.vector(resL[[sti]]$X %*% co[-length(co)])
+      Xbdf <- data.frame(id=rownames(resL[[sti]]$X), xb=Xbi, stringsAsFactors=FALSE)
+      colnames(Xbdf)[2] <- paste0("Xb", sti)
       if(sti > 1) {
         Xb <- merge(Xb, Xbdf, by="id", all=TRUE)
       } else {
         Xb <- Xbdf
       }
-      # standard deviation is the last element
-      s <- c(s, co[length(co)])
-      coef <- c(coef, resi$coefficients)
-      lnlfl <- c(lnlfl, list(resi$lnlf))
-      stuDatl <- c(stuDatl, list(resi$stuDat))
-      Convergence <- c(Convergence, resi$Convergence)
-      rr1l <- c(rr1l, list(resi$rr1))
-      Xl <- c(Xl, list(resi$X))
-      contrastsl <- c(contrastsl, list(resi$contrasts))
-      xlevelsl <- c(xlevelsl, list(resi$xlevels))
-      iter <- c(iter, resi$iterations)
-      obs <- c(obs, resi$obs)
-      wobs <- c(wobs, resi$weightedObs)
-      k <- length(resi$coefficients)
-      # nodes are the same for every run
-      nodes <- resi$nodes
+      # when made into a list, make it Xl
+      resL[[sti]]$Xl <- resL[[sti]]$X
+      resL[[sti]]$X <- NULL
+      resL[[sti]]$rr1l <- resL[[sti]]$rr1
+      resL[[sti]]$rr1 <- NULL
+      resL[[sti]]$lnlfl <- resL[[sti]]$lnlf
+      resL[[sti]]$lnlf <- NULL
+      resL[[sti]]$contrastsl <- resL[[sti]]$contrasts
+      resL[[sti]]$contrasts <- NULL
+      resL[[sti]]$xlevelsl <- resL[[sti]]$xlevels
+      resL[[sti]]$xlevels <- NULL
+      resL[[sti]]$stdev <- resL[[sti]]$coefficients[length(resL[[sti]]$coefficients)]
+      resL[[sti]]$stuDatl <- resL[[sti]]$stuDat
+      resL[[sti]]$stuDat <- NULL
+      resL[[sti]]$iter <- resL[[sti]]$iterations
+      resL[[sti]]$iterations <- NULL
+      resL[[sti]]$coef <- resL[[sti]]$coefficients
+      resL[[sti]]$coefficients <- NULL
+      resL[[sti]]$call <- NULL
+      resL[[sti]]$strataVar <- NULL
+      resL[[sti]]$PSUVar <- NULL
+      resL[[sti]]$itemScorePoints <- NULL
+      resL[[sti]]$wobs <- resL[[sti]]$weightedObs
+      resL[[sti]]$weightedObs <- NULL
     }
+    # store full res list
+    resl <- resL
+    for(sti in 1:length(resL)) {
+      # drop nodes
+      resL[[sti]]$nodes <- NULL
+    }
+    # exclude is for variables we don't want to set globally,
+    # but need resL to retain for post hoc
+
+    # assign variables from the many calls back onto the current frame (the env for this call to mml)
+    setRes(resL, uncollapsed=c("Xl", "rr1l", "stuDatl"),
+           exclude=c("idVar","formula","polyModel","paramTab","fast","scale",
+                     "location", "weightVar"))
+    co <- coefficients
+    # merge together posterior estimates
+    # nodes are the same for every run
+
     if(is.null(weightVar)) {
       stuDat$one <- 1
       stuDatl <- lapply(stuDatl, function(x) {
@@ -412,12 +475,12 @@ mml <- function(formula,
       weightVar <- "one"
     }
     vc <- matrix(0, nrow=length(subtests), ncol=length(subtests))
-    diag(vc) <- s^2
+
+    diag(vc) <- stdev^2
     wgt <- stuDat[ , c(idVar, weightVar)]
     colnames(wgt)[2] <- "w"
     # vcfmat is the correlation functions, just the portion above the diagonal.
     # use a list because we're storing functions
-    
     if(multiCore) {
       corm <- data.frame(i= rep(1:length(subtests), each=length(subtests)),
                          j= rep(1:length(subtests), length(subtests)))
@@ -453,12 +516,12 @@ mml <- function(formula,
         }
         vcij <- mmlCor(Xb1=xbi,
                        Xb2=xbj,
-                       s1=s[i],
-                       s2=s[j],
+                       s1=stdev[i],
+                       s2=stdev[j],
                        rr1=rr1i,
                        rr2=rr1j,
                        weights=w$w,
-                       nodes=resi$nodes,
+                       nodes=nodes,
                        fast=fast)
         return(list(i=i,j=j,vc=vcij))
       }
@@ -514,12 +577,12 @@ mml <- function(formula,
             }
             vcf <- mmlCor(Xb1=xbi,
                           Xb2=xbj,
-                          s1=s[i],
-                          s2=s[j],
+                          s1=stdev[i],
+                          s2=stdev[j],
                           rr1=rr1i,
                           rr2=rr1j,
                           weights=w$w,
-                          nodes=resi$nodes,
+                          nodes=nodes,
                           fast=fast)
             vc[j, i] <- vc[i, j] <- vcf$rho
           }
@@ -545,7 +608,7 @@ mml <- function(formula,
                           stuDat = stuDatl,
                           stuItems = stuItems,
                           weightVar = weightVar,
-                          nodes = resi$nodes,
+                          nodes = nodes,
                           iterations = iter,
                           obs = obs,
                           testScale = testScale,
@@ -629,6 +692,16 @@ mml <- function(formula,
   trms <- delete.response(terms(formula))
   m <- model.frame(trms, data=stuDat, drop.unused.levels = TRUE)
   X <- model.matrix(formula, m)
+  eig <- eigen(crossprod(X))
+  ev <- eig$values/eig$values[1]
+  if(any(ev <= 100 * .Machine$double.eps)) {
+    cs <- colSums(X)
+    cs[cs <= which.min(cs)]
+    message("Thin levels:")
+    print(cs)
+    stop("Nearly singular design matrix. Consider adjusting the model to improve the design matrix.")
+  }
+
   #for prediction
   contrasts <- attributes(X)$contrasts
   xlevels <- .getXlevels(trms, m)
@@ -648,7 +721,6 @@ mml <- function(formula,
   if(verbose >= 1) {
     message("Calculating likelihood function.")
   }
-  
   if(multiCore) {
     # use multiple cores to calculate rr1
     rr1 <- calcRR1_dopar(stu, Q, polyModel, paramTab, nodes, fast)
@@ -672,7 +744,6 @@ mml <- function(formula,
   
   fn2 <- fn.regression(X_=X, i=NULL, wv=weightVar, rr1=rr1, nodes=nodes, stuDat=stuDat)
   opt <- robustOptim(fn2, startVal, verbose=verbose, X=X)
-  
   posteriorEsts <- fn2(opt$par, returnPosterior=TRUE)
   names(opt$par) <- c(colnames(X), "s")
   # default location and scale
@@ -706,34 +777,35 @@ mml <- function(formula,
     location <- 0
   }
   assign("insd", FALSE, envir=environment(fun=fn2))
-  structure(list(call = call,
-                 coefficients = coefficients,
-                 LogLik = -1/2*opt$value,
-                 X = X,
-                 Convergence = opt$convergence,
-                 location = location,
-                 scale = scale,
-                 lnlf= fn2,
-                 rr1= rr1,
-                 stuDat = stuDat,
-                 stuItems = stuItems,
-                 weightVar = weightVar,
-                 nodes = nodes,
-                 iterations = opt$iter,
-                 obs = obs,
-                 weightedObs = weightedObs,
-                 strataVar = strataVar,
-                 PSUVar = PSUVar,
-                 formula = formula,
-                 contrasts = contrasts,
-                 xlevels = xlevels,
-                 polyModel = polyModel,
-                 paramTab = paramTab,
-                 fast = fast,
-                 idVar = idVar,
-                 posteriorEsts = posteriorEsts,
-                 itemScorePoints = agg),
-            class = "mmlMeans")
+  res <- structure(list(call = call,
+                        coefficients = coefficients,
+                        LogLik = -1/2*opt$value,
+                        X = X,
+                        Convergence = opt$convergence,
+                        location = location,
+                        scale = scale,
+                        lnlf= fn2,
+                        rr1= rr1,
+                        stuDat = stuDat,
+                        stuItems = stuItems,
+                        weightVar = weightVar,
+                        nodes = nodes,
+                        iterations = opt$iter,
+                        obs = obs,
+                        weightedObs = weightedObs,
+                        strataVar = strataVar,
+                        PSUVar = PSUVar,
+                        formula = formula,
+                        contrasts = contrasts,
+                        xlevels = xlevels,
+                        polyModel = polyModel,
+                        paramTab = paramTab,
+                        fast = fast,
+                        idVar = idVar,
+                        posteriorEsts = posteriorEsts,
+                        itemScorePoints = agg),
+                   class = "mmlMeans")
+  return(res)
 }
 
 #' @importFrom stats optimize optim reshape rnorm
@@ -757,6 +829,7 @@ mmlCor <- function(Xb1,
   return(list(rho=tanh(opt) * s1 * s2, corLnl=fn2f))
 }
 
+
 cleanStuItems <- function(si, stuDat, idVar) {
   # make sure every stuItems student has a stuDat student, and the other way around
   if(!inherits(si, "data.frame")) {
@@ -775,11 +848,7 @@ cleanStuItems <- function(si, stuDat, idVar) {
   si <- si[,c(idVar, "key", "score")]
   if(any(!si[[idVar]] %in% stuDat[[idVar]])) {
     missing <- (si[[idVar]])[!(si[[idVar]]) %in% stuDat[[idVar]]]
-    stop(paste0("The ", dQuote("si"), " argument must be a list with names that correspond to every " , dQuote("idVar"), " in ", dQuote("stuDat"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "."))
-  }
-  if(any(!stuDat[[idVar]] %in% si[[idVar]])) {
-    missing <- stuDat[[idVar]][!stuDat[[idVar]] %in% si[[idVar]]]
-    stop(paste0("The ", dQuote("stuDat"), " argument must be a data frame with a column ", dQuote("idVar"), " that correspond to every name of ", dQuote("si"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "." ))
+    stop(paste0("The ", dQuote("stuItems"), " argument must be a list with names that correspond to every " , dQuote("idVar"), " in ", dQuote("stuDat"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "."))
   }
   # make sure si and stuDat are in the same order
   si[[idVar]] <- as.character(si[[idVar]])
@@ -864,6 +933,15 @@ cleanPolyParamTab <- function(ppt) {
   return(list(polyParamTab=ppt, dvars=dvars))
 }
 
+cleanStuDat <- function(stuDat, stuItems, idVar) {
+  if(any(!stuDat[[idVar]] %in% stuItems[[idVar]])) {
+    stuDat <- stuDat[stuDat[[idVar]] %in% stuItems[[idVar]], ]
+  }
+  stuDat[[idVar]] <- as.character(stuDat[[idVar]])
+  stuDat <- stuDat[order(stuDat[[idVar]]), ]
+  return(stuDat)
+}
+
 condenseParamTab <- function(dpt, ppt, dvars) {
   # build paramTab with info from both
   if(!is.null(dpt)) {
@@ -910,32 +988,85 @@ condenseParamTab <- function(dpt, ppt, dvars) {
 robustOptim <- function(fn, X, par0=NULL, verbose=0) {
   fnDerivs <- getDerivs(fn)
   if(verbose >= 1) {
-    message("Initial optimization with Quasi-Newton.")
+    message("Initial optimization with optim using the L-BFGS-B method in optim.")
   }
-  #cl <- makeCluster(detectCores()-1, type="FORK")
-  #setDefaultCluster(cl=cl)
-  #opt <- optimParallel(par0, fn=fn, gr=fnDerivs$grad, method="L-BFGS-B", control=list(maxit=1e5, factr = 1e-10, trace = verbose >= 2, lmm=10, parscale=1/c(pmax(1,apply(X,2,sd)),1)))
-  # will test the entire function
   opt <- optim(par0, fn=fn, gr=fnDerivs$grad, method="L-BFGS-B", control=list(maxit=1e5, factr = 1e-10, trace = verbose >= 2, lmm=10, parscale=1/c(pmax(1,apply(X,2,sd)),1)))
-  
-  # push to actual convergence
   if(verbose >= 1) {
-    message("Further refining optimization with Newton's method.")
+    message("Second optimization with lbfgs::lbfgs.")
   }
-  opt <- Newton(opt$par, unname(opt$counts["gradient"]), verbose, fn, fnDerivs$grad, fnDerivs$hess) # number of BFGS steps
-  # make sure the root var is the positive root (the SD)
+  opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
+  fng <- fnDerivs$grad
+  gr <- fng(opt$par)
+  # this is the minimum value. Rest if it steps that far out
+  if(sqrt(sum(gr^2)) / max(1, sqrt(sum(opt$par^2))) > 1e-5) {
+    opt <- lbfgs::lbfgs(call_eval=fn,
+                        call_grad=fnDerivs$grad,
+                        vars=opt$par,
+                        invisible=ifelse(verbose > 2, 0, 1), # a backwards verbose
+                        epsilon= 1e-5, # gradient convergence criterion
+                        max_iterations=1e5,
+                        m=max(6, sqrt(length(par0))))
+  }
+  opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
+  # map the SD term back
   opt$par[length(opt$par)] <- sqrt(ifelse(opt$par[length(opt$par)] < 1, exp(opt$par[length(opt$par)] - 1), opt$par[length(opt$par)]^2))
-  if(opt$convergence == 0) {
+  if(opt$convergence %in% c(0)) {
     convergence <- "converged"
   } else {
-    if(opt$convergence == 1) {
+    if(opt$convergence %in% 1) {
       convergence <- "Iteration limit reached"
     } else {
       convergence <- "Did not converge"
     }
   }
   opt$convergence <- convergence
+  if(!"iterations" %in% names(opt)) {
+    opt$iterations <- -1
+  }
   return(opt)
+}
+
+grad_descent <- function(x0, fn, grf, max_it = 10 * length(x0), verbose=0, c1=0.001, c2=0.1) {
+  x <- x0
+  fx <- fn(x)
+  gx <- grf(x)
+  alpha <- 1
+  itter <- 0
+  while(itter < max_it && sqrt(sum(gx^2))/max(1,sqrt(sum(x^2))) > 1e-5) {
+    #it's possible to get stuck in a oscelator in a nice quadratic peak. This stops that.
+    alpha <- alpha / 2
+    itter <- itter + 1
+    wolf_conds_met <- FALSE
+    mina <- 0
+    maxa <- Inf
+    cat("  alpha =",alpha,"\n")
+    while(!wolf_conds_met) {
+      w1met <- checkW1(fn, grf, x, gx, fx, alpha, c1)
+      w2met <- checkW2(fn, grf, x, gx, fx, alpha, c2)
+      wolf_conds_met <- w1met && w2met
+      if(!wolf_conds_met) {
+        if(!w1met) {
+          maxa <- min(maxa, alpha)
+        }
+        if(!w2met) {
+          mina <- max(mina, alpha)
+        }
+        if(maxa < Inf) {
+          alpha <- (mina + maxa)/ 2
+        } else {
+          alpha <- alpha * 2
+        }
+      }
+      
+    }
+    x <- x + alpha * gx
+    fx <- fn(x)
+    gx <- grf(x)
+    if(verbose > 0) {
+      cat("value = ", format(fx, digits=16), " gradient condition =", format(sum(abs(gx))/(length(x0) * 1e-5), digits=16), " > 1 \n")
+    }
+  }
+  return(x)
 }
 
 getDerivs <- function(fn) {
@@ -949,23 +1080,38 @@ getDerivs <- function(fn) {
 }
 
 Newton <- function(par0, iter0, verbose, fn, fng, fnh) {
+  # push to actual convergence
   opt <- list(par=par0, iter=iter0, convergence=0)
-  gr <- 1
+  # get an actual gr, maybe we don't need more refinement
+  gr <- fng(opt$par)
   # this is the minimum value. Rest if it steps that far out
   opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
-  while(max(abs(gr)) > length(opt$par) * 1e-5 && opt$iter < 50 + iter0) {
+  # first try BFGS
+  gr_prev <- 2*max(abs(gr)) # allows the first condition alone to decide if it is a good idea to try BFGS
+  while(sqrt(sum(gr)) / max(1, sqrt(sum(opt$par^2))) < 1e-5 && opt$iter < 50 + iter0) {
+    if(iter0 == opt$iter && verbose >= 1) {
+      message("Further refining optimization with Newton's method.")
+    }
     gr <- fng(opt$par)
     H <- fnh(opt$par)
+    if(any(H %in% c(NA, NaN, Inf, -Inf))) {
+      stop("Hessian is not defined.")
+    }
     # sometimes H is just not PD, adjust it slightly to be PD in that case
     H <- nearPD2(H)
     update <- qr.solve(qr(H), -1*gr)
     opt$par <- opt$par + update
     opt$iter <- opt$iter + 1
-    gr <- gr / pmax(1, opt$par)
     if(verbose >= 2) {
-      message(paste0("  max gradient=", max(abs(gr))))
+      message(paste0("  step =", opt$iter - iter0))
+      message(paste0("    lnl =", fn(opt$par)))
+      message(paste0("    ||gradient||2=", sqrt(sum(gr^2))))
+      message(paste0("    max gradient=", max(abs(gr))))
+      message(paste0("    ||step||2=", sqrt(sum(update^2))))
+      message(paste0("    max step =", max(abs(update))))
     }
-    # this is the minimum value. Rest if it steps that far out
+    gr <- gr / pmax(1, opt$par)
+    # this is the minimum value. Reset if it steps that far out
     opt$par[length(opt$par)] <- max( (log(1e-6)+1), opt$par[length(opt$par)])
   }
   if(opt$iter == 50 + iter0) {
@@ -978,4 +1124,49 @@ Newton <- function(par0, iter0, verbose, fn, fng, fnh) {
     message(paste0("final lnl=", opt$value))
   }
   return(opt)
+}
+
+# assign variables from the many calls of a composite back onto the current frame
+# resList: a list, each element is an mmlMeans
+# pos: where to assign the variables
+# pos=1 is the current parent frame (Calling environment)
+# uncollapsed: these variables placed in a list that is not collapsed; other variables are collapsed with rbind
+# exclude: these vriables are not updated on the frame at 'pos'
+setRes <- function(resList, pos=1, uncollapsed=NULL, exclude=NULL) {
+  res0 <- resList[[1]]
+  rn <- names(res0)
+  for(i in 1:length(rn)) {
+    resi <- list()
+    for(j in 1:length(resList)) {
+      resi <- c(resi, list(resList[[j]][[rn[i]]]))
+    }
+    binder <- "c"
+    if(inherits(res0[[rn[i]]], "list")) {
+      binder <- "gidentity"
+    }
+    if(inherits(res0[[rn[i]]], "data.frame")) {
+      binder <- "rbind"
+    }
+    if(rn[i] %in% uncollapsed) {
+      binder <- "gidentity"
+    }
+    resi <- do.call(binder, resi)
+    if(!(rn[i] %in% exclude)){
+      assign(rn[i], resi, envir=parent.frame())
+    }
+  }
+
+}
+
+gidentity <- function(...) {
+  inputs <- list(...)
+  return(inputs)
+}
+
+checkW1 <- function(fn, grf, x, gx, fx, alpha, c1) {
+  fn(x + alpha * gx) <= fx + c1 * alpha * sum(gx^2)
+}
+
+checkW2 <- function(fn, grf, x, gx, fx, alpha, c2) {
+  -gx * grf(x + alpha * gx) <= -c2 * sum(gx^2)
 }
