@@ -35,7 +35,7 @@ Encoding: UTF-8
 RoxygenNote: 7.3.2
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
-Packaged: 2025-02-25 19:43:13 UTC; pbailey
+Packaged: 2025-02-28 21:49:46 UTC; pbailey
 Author: Emmanuel Sikali [pdr],
   Paul Bailey [aut, cre] (<https://orcid.org/0000-0003-0989-8729>),
   Eric Buehler [aut],
