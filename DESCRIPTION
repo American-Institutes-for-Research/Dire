@@ -1,23 +1,28 @@
 Package: Dire
-Version: 2.2.0
-Date: 2023-10-24
+Version: 3.0.0
+Date: 2025-02-28
 Title: Linear Regressions with a Latent Outcome Variable
-Authors@R: c(person("Emmanuel", "Sikali", role="pdr", email = "Emmanuel.Sikali@ed.gov"),
-             person("Paul", "Bailey", role=c("aut", "cre"), email="pbailey@air.org"),
+Authors@R: c(person("Emmanuel", "Sikali",
+                    role="pdr",
+                    email = "Emmanuel.Sikali@ed.gov"),
+             person("Paul", "Bailey", role=c("aut", "cre"),
+                    email="pbailey@air.org",
+                    comment = c(ORCID = "0000-0003-0989-8729")),
              person("Eric", "Buehler", role="aut"),
              person("Sun-joo", "Lee", role="aut"),
              person("Harold", "Doran", role="aut"),
-             person("Blue", "Webb", role="ctb"),
+             person("Blue", "Webb", role="aut",
+                    comment=c(ORCID="0009-0004-4080-9864")),
+             person("Ali", "Fathi", role="ctb"),
              person("Claire", "Kelley", role="ctb"))
 Maintainer: Paul Bailey <pbailey@air.org>
 Depends: R (>= 4.0.0)
-Imports: foreach, iterators, methods, Matrix, haven, Rcpp (>= 1.0.8.3),
-        lbfgs, MASS
+Imports: methods, Matrix, haven, Rcpp (>= 1.0.8.3), lbfgs, MASS,
+        data.table, tidyr, dplyr, cli, lifecycle, mvnfast
 Description: Fit latent variable linear models, estimating score distributions for groups of people, following Cohen and Jiang (1999) <doi:10.2307/2669917>. In this model, a latent distribution is conditional on students item response, item characteristics, and conditioning variables the user includes. This latent trait is then integrated out. This software is intended to fit the same models as the existing software 'AM' <https://am.air.org/>. As of version 2, also allows the user to draw plausible values.
 License: GPL-2
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, testthat, withr, doParallel, parallel,
-        EdSurvey
+Suggests: knitr, rmarkdown, testthat, withr, EdSurvey
 URL: https://american-institutes-for-research.github.io/Dire/
 BugReports: https://github.com/American-Institutes-for-Research/Dire/issues
 ByteCompile: true
@@ -27,14 +32,15 @@ Note: This publication was prepared for NCES under Contract No.
         organizations does not imply endorsement by the U.S.
         Government.
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
-Packaged: 2023-10-26 21:47:29 UTC; pbailey
+Packaged: 2025-02-25 19:43:13 UTC; pbailey
 Author: Emmanuel Sikali [pdr],
-  Paul Bailey [aut, cre],
+  Paul Bailey [aut, cre] (<https://orcid.org/0000-0003-0989-8729>),
   Eric Buehler [aut],
   Sun-joo Lee [aut],
   Harold Doran [aut],
-  Blue Webb [ctb],
+  Blue Webb [aut] (<https://orcid.org/0009-0004-4080-9864>),
+  Ali Fathi [ctb],
   Claire Kelley [ctb]
