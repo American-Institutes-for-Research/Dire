@@ -33,7 +33,7 @@ polyParamTab <- data.frame(ItemID = factor(c("m0757cl", "m066501")),
                            d2 = c(-0.57, 0.56),
                            d3 = c(-1.18, NA),
                            D = c(1.7, 1.7),
-                           scorePoints = c(4L, 3L)) # number of score points, read d1 to d(n-1)
+                           scorePoints = c(3L, 2L)) # number of score points, read d1 to d(n-1)
 # read-in NAEP Primer data 
 sdf <- readNAEP(system.file("extdata/data", "M36NT2PM.dat", package = "NAEPprimer"))
 # read in these items
@@ -42,8 +42,9 @@ items <- c(as.character(dichotParamTab$ItemID), as.character(polyParamTab$ItemID
 # origwt, full sample weights
 # repgrp1, stratum indicator
 # jkunit, PSU indicator
-edf <- getData(data=sdf, varnames=c(items, "dsex", "origwt", "repgrp1", "jkunit", "sdracem"),
-               omittedLevels = FALSE, returnJKreplicates=FALSE)
+edf <- EdSurvey::getData(data=sdf,
+                         varnames=c(items, "dsex", "origwt", "repgrp1", "jkunit", "sdracem"),
+                         dropOmittedLevels = FALSE, returnJKreplicates=FALSE)
 # make up a student ID
 edf$sid <- paste0("S",1:nrow(edf))
 # apply simplified scoring
@@ -54,7 +55,8 @@ for(i in 1:length(items)) {
   edf[,rawcol] <- edf[,coli]
   if( coli %in% dichotParamTab$ItemID) {
     edf[,coli] <- ifelse(grepl("[ABCDE]", edf[,rawcol]), 0, NA)
-    edf[,coli] <- ifelse(grepl("*", edf[,rawcol]), 1, edf[,coli])
+    edf[,coli] <- ifelse(grepl("Incorrect", edf[,rawcol]), 0, edf[,coli])
+    edf[,coli] <- ifelse(grepl("[*]", edf[,rawcol]), 1, edf[,coli])
   } else {
     # scale for m066501
     edf[,coli] <- ifelse(grepl("Incorrect", edf[,rawcol]), 0, NA)
@@ -67,14 +69,10 @@ for(i in 1:length(items)) {
     edf[,coli] <- ifelse(grepl("Three correct", edf[,rawcol]), 3, edf[,coli])
   }
   edf[,rawcol] <- NULL # delete original
-}
+} # end scoreing
 
-# stuItems has one row per student/item combination
-stuItems <- edf[,c("sid", items)]
-stuItems <- reshape(data=stuItems, varying=c(items), idvar=c("sid"),
-                    direction="long", v.names="score", times=items, timevar="key")
 # stuDat is one row per student an contains student-level information
-stuDat <- edf[,c("sid", "origwt", "repgrp1", "jkunit", "dsex", "sdracem")]
+stuDat <- edf[,c("sid", "origwt", "repgrp1", "jkunit", "dsex", "sdracem", items)]
 
 # testDat shows scaling and weights for subtests, an overall score can be treated as a subtest
 testDat <- data.frame(test=c("composite", "composite") ,
@@ -85,45 +83,44 @@ testDat <- data.frame(test=c("composite", "composite") ,
 
 # estimate a regression for Algebra subscale
 mmlA <- mml(alg ~ dsex,
-            stuItems=stuItems, stuDat=stuDat,
+            stuDat=stuDat,
             dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             testScale=testDat,
             idVar="sid", weightVar="origwt", # these are column names on stuDat
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
-mmlAs <- summary.mmlMeans(mmlA, varType="Taylor")
+summary(mmlA)
 
 
 # estimate a regression for Numeracy subscale
 mmlN <- mml(num ~ dsex,
-            stuItems=stuItems, stuDat=stuDat,
+            stuDat=stuDat,
             dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             testScale=testDat,
+            Q=128,
             idVar="sid", weightVar="origwt", # these are column names on stuDat
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
-mmlNs <- summary.mmlMeans(mmlN, varType="Taylor")
-mmlNs
+summary(mmlN)
 
 # draw plausible values for mmlA
-head(pvd <- drawPVs.mmlMeans(mmlA))
-# alternative specification
-head(pvs <- drawPVs.mmlMeans(summary.mmlMeans(mmlA, varType="Taylor"), stochasticBeta=TRUE))
+pvd <- drawPVs(summary(mmlA))
+head(pvd)
 
 # composite regression 
 mmlC <- mml(composite ~ dsex ,
-            stuItems=stuItems, stuDat=stuDat,
+            stuDat=stuDat,
             dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             testScale=testDat,
             idVar="sid", weightVar="origwt", # these are column names on stuDat
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
-summary(mmlC, varType="Taylor")
+mmlCsum <- summary(mmlC)
+mmlCsum # show results
 
-# draw plausible values for mmlC
-head(pvd <- drawPVs.mmlCompositeMeans(mmlC))
-# alternative specification 
-mmlCsum <- summary.mmlCompositeMeans(mmlC, varType="Taylor")
-head(pvs <- drawPVs.mmlCompositeMeans(mmlCsum, stochasticBeta=TRUE))
+# draw plausible values for mmlC, show first few rows
+pvc <- drawPVs(mmlCsum)
+head(pvc)
 
 }
+

@@ -7,13 +7,9 @@
 #' 
 #' @param formula  a \ifelse{latex}{\code{formula}}{\code{\link[stats]{formula}}}
 #'                 object in the style of \ifelse{latex}{\code{lm}}{\code{\link[stats]{lm}}}
-#' @param stuItems a \code{data.frame} where each row represents a single student's response to one item.
-#'                 The columns must include the \code{idVar} column, a \code{key} column, and a
-#'                 \code{score} column. Values in the \code{score} column are checked against expectations
-#'                 (based on \code{dichotParamTab} and \code{polyParamTab}) and when
-#'                 \code{verbose} is >= 1 a table of expected and actual levels is printed.
+#' @param stuItems deprecated. Simply put items in \code{stuDat} now.
 #' @param stuDat   a \code{data.frame} with a single row per student. Predictors in
-#'                 the \code{formula} must be in \code{stuDat}.
+#'                 the \code{formula} must be in \code{stuDat} as well as items.
 #' @param dichotParamTab a \code{data.frame} of dichotomous item information, see Details
 #' @param polyParamTab a \code{data.frame} of polytomous item information, see Details
 #' @param testScale a \code{data.frame} of scaling information, see Details
@@ -26,9 +22,7 @@
 #' @param weightVar a variable name on \code{stuDat} that is the full sample weight
 #' @param idVar a variable name on \code{stuDat} that is the identifier. Every 
 #'              ID from \code{stuDat} must appear on \code{stuItems} and vice versa.
-#' @param multiCore allows the \code{foreach} package to be used. You should
-#'                  have already setup the 
-#' \ifelse{latex}{the \code{registerDoParallel} function in the \code{doParallel} package}{\code{\link[doParallel]{registerDoParallel}}}.
+#' @param multiCore a logical indicating whether to use parallel processing
 #' @param bobyqaControl deprecated. A list that gets passed to the \code{bobyqa} optimizer in \code{minqa}
 #' @param composite a logical indicating if an overall test should be treated as
 #'                  a composite score; a composite is a weighted average of the
@@ -38,10 +32,13 @@
 #' @param PSUVar character naming a variable on \code{stuDat}; the primary sampling unit
 #'               (PSU) variable. Used in post-hoc robust variance estimation. The values
 #'               do not need to be unique across strata.
-#' @param fast a logical indicating if cpp code should be used in \code{mml} processes. This should 
-#'             yield speed-ups to runs. 
-#' @param calcCor set to \code{TRUE} to calculate covariances. Needed to estimate variances and form plausible values
+#' @param fast deprecated. Always TRUE now.
+#' @param calcCor deprecated. Always TRUE now.
 #' @param verbose integer, negative or zero for no details, increasingly verbose messages at one and two
+#' @param retainedInformation set to a value of 1 to fit the model as is typically fit. If the value is less than one, a principal component analysis is performed and columns associated with principal components totaling at least \code{retainedInformation} are retained while all other data is discarded. The estimated latent regression coefficients will accordingly be named as PC1, ..., PCN.
+#' @param optimizer character naming the optimization method to use;
+#'                  one of \code{EM} for Expectation Maximization
+#'                  or \code{QN} for Quasi-Newton
 #' 
 #' @details
 #' 
@@ -142,22 +139,24 @@
 #' \item{\code{call} the call used to generate this \code{mml.means} object}
 #' \item{\code{coefficients} the unscaled marginal maximum likelihood regression coefficients}
 #' \item{\code{LogLik} the log-likelihood of the fit model}
-#' \item{\code{X} the design matrix of the marginal maximum likelihood regression}
+#' \item{\code{getX} a function that, when called on \code{stuDat}, returns the design matrix of the marginal maximum likelihood regression}
 #' \item{\code{Convergence} a convergence note from the optimizer}
 #' \item{\code{location} used for scaling the estimates}
 #' \item{\code{scale} used for scaling the estimates}
-#' \item{\code{lnlf} the log-likelihood function of the unscaled parameters} 
+#' \item{\code{lnlf} the log-likelihood function of the unscaled parameters}
+#' \item{\code{funcs} a list of functions that may be evaluated on a vector of parameters. The first returns the log-likelihood of the marginal maximum likelihood regression evaluated at the given parameters. The second and third correspond to the first and second derivatives, respectively, of the MML regression evaluated at the parameters.}  
 #' \item{\code{rr1} the density function of each individual, conditional only on item responses in \code{stuItems}}
 #' \item{\code{stuDat} the \code{stuDat} argument}
+#' \item{\code{likelihood_stus} \code{rr1}, but pivoted long so that each row corresponds to a student.}
 #' \item{\code{weightVar} the name of the weight variable on \code{stuDat}}
 #' \item{\code{nodes} the nodes the likelihood was evaluated on}
 #' \item{\code{iterations} the number of iterations required to reach convergence}
 #' \item{\code{obs} the number of observations used}
+#' \item{\code{testScale} the \code{testScale} used to scale the data}
 #' \item{\code{weightedObs} the weighted N for the observations}
 #' \item{\code{strataVar} the column name of the stratum variable on stuDat; potentially used for variance estimation}
 #' \item{\code{PSUVar} the column name of the PSU variable on stuDat; potentially used for variance estimation}
 #' \item{\code{itemScorePoints} a data frame that shows item IDs, the number of score points, expected scores (both from the paramTab arguments), as well as the occupied score points}
-#' \item{\code{stuItems} the data frame passed to \code{mml} reformatted for use in mml}
 #' \item{\code{formula} the formula passed to \code{mml}}
 #' \item{\code{contrasts} the contrasts used in forming the design matrix}
 #' \item{\code{xlevels} the levels of the covariates used in forming the design matrix}
@@ -166,6 +165,9 @@
 #' \item{\code{fast} the value of the argument of the same name passed to \code{mml}}
 #' \item{\code{idVar} the value of the argument of the same name passed to \code{mml}}
 #' \item{\code{posteriorEsts} the posterior estimates for the people in \code{stuDat} included in the model}
+#' \item{\code{pred} the predicted outcome based on the estimated coefficients}
+#' \item{\code{values} a list of values used for posterior estimation}
+#' \item{\code{V} a diagonal matrix of the number of columns in the design matrix}
 #' }
 #' 
 #' When a composite score is computed there are several subscales run and the return is a \code{mmlCompositeMeans}. Many elements are themselves list with one element per construct.
@@ -185,7 +187,7 @@
 #' \item{\code{obs} a vector of the the number of observations used on each construct}
 #' \item{\code{testScale} the \code{testScale} used to scale the data}
 #' \item{\code{weightedObs} a vector of the weighted N for the observations}
-#' \item{\code{SubscaleVC} the covariance matrix of subscales. The residuals are assumed to be multivariate normal with this covairiance matrix}
+#' \item{\code{SubscaleVC} the covariance matrix of subscales. The residuals are assumed to be multivariate normal with this covariance matrix}
 #' \item{\code{idVar} the name of the identifier used on \code{stuDat} and \code{stuItems} data}
 #' \item{\code{resl} list of mmlMeans objects, one per construct}
 #' \item{\code{strataVar} the column name of the stratum variable on \code{stuDat}; potentially used for variance estimation}
@@ -197,6 +199,9 @@
 #' \item{\code{polyModel} the value of the argument of the same name passed to \code{mml}}
 #' \item{\code{posteriorEsts} the list of posterior estimates for the people in \code{stuDat} included in the model}
 #' \item{\code{SubscaleVC} the matrix of latent correlations across constructs}
+#' \item{\code{modelFrameFull} the full model frame}
+#' \item{\code{stuDatSubsets} a logical matrix with a column per subscale and a row for each student; used for subsetting students within subscales}
+#' \item{\code{values} a list of values used for posterior estimation}
 #' }
 #'
 #' \code{LogLik} is not returned because there is no likelihood for a composite model.
@@ -204,6 +209,8 @@
 #' @example man/examples/de.R
 #' @author Harold Doran, Paul Bailey, Claire Kelley, Sun-joo Lee, and Eric Buehler 
 #' @export
+#' @importFrom tidyr pivot_wider
+#' @importFrom dplyr left_join %>%
 #' @importFrom methods as 
 #' @importFrom stats as.formula model.matrix coef dbinom sd terms reformulate complete.cases delete.response .getXlevels na.omit
 #' @importFrom utils head
@@ -211,15 +218,15 @@
 #' @import haven 
 #' @useDynLib Dire, .registration = TRUE
 mml <- function(formula,
-                stuItems,
+                stuItems = NULL,
                 stuDat,
                 idVar,
                 dichotParamTab = NULL,
                 polyParamTab = NULL,
                 testScale = NULL,
-                Q = 30,
-                minNode = -4,
-                maxNode = 4,
+                Q = 66,
+                minNode = -5,
+                maxNode = 5,
                 polyModel = c('GPCM', 'GRM'),
                 weightVar = NULL,
                 multiCore = FALSE,
@@ -227,26 +234,30 @@ mml <- function(formula,
                 composite = TRUE,
                 strataVar = NULL,
                 PSUVar = NULL,
-                fast = TRUE,
-                calcCor = TRUE,
-                verbose=0) {
+                fast = NULL,
+                calcCor = NULL,
+                verbose=0,
+                retainedInformation=1,
+                optimizer = c("EM", "QN")) {
+  call <- match.call()
+  optimizer <- match.arg(optimizer)
+  if(maxNode < minNode) {
+    stop("the maxNode must be larger than the minNode.")
+  }
   if(!missing(bobyqaControl)) {
     message("bobyqaControl is deprecated and will be ignored. It was replace with Newton's method.")
   }
-  # check for parrallel if multiCore True 
-  if(multiCore == TRUE){
-    # check for doParallel
-    if(!requireNamespace("doParallel")) {
-      message("Unable to load package doParallel, setting multiCore to FALSE. Install doParallel to use multiCore option.")
-      multiCore <- FALSE
-    } else {
-      # always use C++ version when multicore
-      fast <- TRUE
-    }
+  if(!missing(fast)) {
+    message("fast is deprecated and will be ignored. The fast methods are always used now.")
   }
-    
-  call <- match.call()
+  if(!missing(calcCor)) {
+    message("calcCor is deprecated and will be ignored. The correlations are always calculated now.")
+  }
+  
   polyModel <- match.arg(polyModel)
+  if(polyModel != 'GPCM') {
+    stop(paste0(dQuote(polyModel), " has not been implemented."))
+  }
   polyModel <- tolower(polyModel)
   if(!idVar %in% names(stuDat)) {
     stop(paste0(dQuote("idVar"), ", ", dQuote(idVar), ", must be a variable on stuDat."))
@@ -262,159 +273,104 @@ mml <- function(formula,
   if(missing(polyParamTab) & missing(dichotParamTab)) {
     stop(paste0("At least one of the arguments ", dQuote("polyParamTab"), " or ", dQuote("dichotParamTab"), " must be defined."))
   }
-  dichotParamTab <- cleanDichotParamTab(dichotParamTab) 
-  # clean polyParamTab, get the list of d variables on it
-  pptd <- cleanPolyParamTab(polyParamTab)
-  paramTab <- condenseParamTab(dichotParamTab, pptd$polyParamTab, pptd$dvars)
-  
-  # save a copy of the raw stuItems for potential composite call
-  stuItems0 <- stuItems
-  stuItems <- cleanStuItems(stuItems, stuDat, idVar)
-  stuDat <- cleanStuDat(stuDat, stuItems, idVar)
 
-  # overall: boolean for if this is a test (multiple subtest)
-  # assume not, check if TRUE later
-  overall <- FALSE 
+  if(missing(weightVar)) {
+    weightVar <- "one"
+    stuDat$one <- 1
+  }
+  if(!is.null(stuItems)) {
+    items <- unique(stuItems$key)
+    cols_to_drop <- colnames(stuDat)[colnames(stuDat) %in% items]
+    if(length(cols_to_drop) > 0) {
+      warning("'stuItems' is deprecated. Please include the item responses in `stuDat`; dropping colums ", paste(cols_to_drop, collapse=", "), " from stuDat and using data from stuItems instead.")
+      stuDat <- stuDat[, !names(stuDat) %in% cols_to_drop]
+    } else {
+      warning("'stuItems' is deprecated. Please include the item responses in `stuDat`; adding columns ", paste(items, collapse = ", "), " to stuDat.")
+    }
+    stuItems_wide <- stuItems %>%
+      pivot_wider(names_from = key, values_from = score)
+    stuDat <- stuDat %>%
+      left_join(stuItems_wide, by = idVar)
+  }
   # formula may be missing, then define a null model
   if(missing(formula)) {
     formula <- ~ 1
-  } # end if(missing(formula))
-  testScale2 <- testScale # potentially update testScale
-  if(length(formula) > 2) {
-    outcome <- as(formula[[2]], "character")
-    if(outcome %in% c(paramTab$test)) {
-      testScale2 <- testScale[testScale$test %in% outcome, ]
-      if("subtest" %in% colnames(testScale)) {
-        testScale2 <- testScale2[is.na(testScale2$subtest), ]
-      }
-      paramTab <- paramTab[paramTab$test %in% outcome, ]
-      overall <- TRUE
-    } else {
-      if( "subtest" %in% colnames(paramTab) & outcome %in% paramTab$subtest) {
-        paramTab <- paramTab[paramTab$subtest %in% outcome,]
-        testScale2 <- testScale[testScale$subtest %in% outcome,]
-      } else {
-        stop(paste0("Outcome variable ", dQuote(outcome)," not found in any of  ", pasteItems(dQuote(c("dichotParamTab$test", "dichotParamTab$subtest", "polyParamTab$test", "polyParamTab$subtest")), "nor"), "."))
-      }
+  }
+  outcome <- all.vars(formula)[1]
+  if(outcome %in% testScale$test) {
+    testScale <- testScale[testScale$test == outcome,]
+  }
+  else if(outcome %in% testScale$subtest) {
+    testScale <- testScale[!is.na(testScale$subtest) & testScale$subtest == outcome,]
+  }
+  if(!composite & nrow(testScale) > 1) {
+    testScale <- testScale[is.na(testScale$subtest), ]
+  }
+  if(nrow(testScale) > 1) {
+    composite <- TRUE
+    if("subtest" %in% colnames(testScale)) {
+      testScale <- testScale[!is.na(testScale$subtest),]
     }
-  } else { # else for     if(length(formula) > 2) 
-    # the user did not specify a test or subtest
-    if(length(unique(paramTab$test)) > 1) {
-      stop("when there are multiple tests defined the test must be specified as the outcome in the formula.")
-    }
-    if(!"subtest" %in% colnames(paramTab)) {
-      paramTab$subtest <- "default subtest"
-      composite <- FALSE
-      overall <- FALSE
-    }
-    if(length(unique(paramTab$subtest)) > 1) {
-      overall <- TRUE
-    }
-  } # end else for if(length(formula) > 2)
-  # in this situation, it is not composite/overall
-  if(length(unique(paramTab$subtest)) == 1) {
-    overall <- FALSE
+  } else {
     composite <- FALSE
   }
-  # subset testScale if not composite
-  if(!composite) {
-    testScale <- testScale2
+  if(verbose > 0) {
+    message("Scoring item responses.")
   }
+  scoredTest <- scoreTest(stuDat=stuDat, dichotParamTab=dichotParamTab,
+                          polyParamTab=polyParamTab, testScale=testScale,
+                          weightVar = weightVar, idVar = idVar,
+                          Q=Q, minNode = minNode, maxNode = maxNode,
+                          strataVar = strataVar, PSUVar = PSUVar)
+  
+  if(retainedInformation <= 0 | retainedInformation > 1) {
+    stop("argument ", dQuote("Retained information"), " must be larger than 0 and not larger than 1.")
+  }
+  information_reduced <- FALSE
+  if(retainedInformation < 1) {
+    information_reduced <- TRUE
+    svd_inf <- reduceInformation(data = stuDat, formula = formula, retainedInformation=retainedInformation, verbose=verbose>0)
+    formula <- svd_inf$formula
+    scoredTest$stuDat <- svd_inf$data
+  }
+  # overall: boolean for if this is a test (multiple subtest)
+  # assume not, check if TRUE later
+  overall <- FALSE 
+
   # break down to subtests and optimize those
   if(composite) {
-    # now form X
     trms <- delete.response(terms(formula))
-    mFull <- model.frame(trms, stuDat, na.action=na.omit)
-    subtests <- sort(unique(paramTab$subtest))
-    testScale <- testScale[order(testScale$subtest), ]
-    testScale <- testScale[testScale$subtest %in% subtests, ]
-    coef <- c()
-    lnlfl <- list()
-    rr1l <- list()
-    stuDatl <- list()
-    Xl <- list()
-    contrastsl <- list()
-    xlevelsl <- list()
-    iter <- c()
-    obs <- c()
-    wobs <- c()
-    Convergence <- c()
-    subt <- c()
-    resl <- list()
-    stdev <- c()
-    posteriorEsts<- data.frame()
-    calls <- list()
+    mFull <- model.frame(trms, scoredTest$stuDat, na.action=na.omit)
+    subtests <- sort(unique(scoredTest$paramTab$subtest))
+    termLabels <- attr(terms(formula), "term.labels")
+    resL <- list()
     for(sti in 1:length(subtests)) {
-      subt <- c(subt, subtests[sti])
-      termLabels <- attr(terms(formula), "term.labels")
       if(length(termLabels) == 0) {
         termLabels <- "1"
       }
       formulai <- reformulate(termLabels, response = subtests[sti])
-      calli <- call
-      calli$formula <- formulai
-      # this resolves any lazy unresolved calls in variables
-      calli$stuItems <- stuItems
-      calli$stuDat <- stuDat
-      calli$dichotParamTab <- dichotParamTab
-      calli$polyParamTab <- polyParamTab
-      calli$testScale <- testScale
-      calli$strataVar <- strataVar
-      calli$PSUVar <- PSUVar
-      # this subtest will not itself be a composite
-      calli$composite <- FALSE
-      # we multicore on the outer loop, not inner
-      calli$multiCore <- FALSE
-      calls <- c(calls, list(calli))
+      if(verbose > 0) {
+        message("Estimating subscale:", subtests[sti])
+      }
+      mmli <- mmlu(formula = formulai,
+                   scored_data = scoredTest,
+                   optimizer = optimizer, 
+                   verbose = verbose)
+      gc()
+      resL <- c(resL, list(mmli))
     }
-    
-    if(multiCore) {
-      if(verbose >= 1) {
-        cat("\n")
-        message(paste0("Estimating constructs in parallel."))
-      }
-      itc <- iter(calls)
-      resL <- foreach(dopari=itc) %dopar% {
-        res <- eval(dopari)
-        calliName <- call
-        calliName$formula <- formulai
-        res$call <- calliName
-        return(res)
-      }
-    } else {
-      resL <- list()
-      for(i in 1:length(calls)) {
-        if(verbose >= 1) {
-          cat("\n")
-          message(paste0("Estimating construct ", dQuote(subtests[i])))
-        }
-        calli <- calls[[i]]
-        res <- eval(calli)
-        calliName <- call
-        calliName$composite <- FALSE
-        calliName$formula <- formulai
-        res$call <- calliName
-        resL <- c(resL, list(eval(calli)))
-      }
+    if(verbose > 0) {
+      message("Estimating posterior correlations.")
     }
-    names(resL) <- subtests
+    mmlc <- mmlcomp(resL, optimizer="MLE")
     # nodes are all the same
     nodes <- resL[[1]]$nodes
     k <- length(resL[[1]]$coefficients)
     for(sti in 1:length(resL)) {
-      # fix posteriors
-      #pei <- resL[[sti]]$posteriorEsts
-      nidv <- colnames(resL[[sti]]$posteriorEsts) != "id" # non id variable names
-      colnames(resL[[sti]]$posteriorEsts)[nidv] <- make.names(paste0(colnames(resL[[sti]]$posteriorEsts)[nidv], "_", subtests[sti]))
-      if(sti == 1) {
-        posteriorEsts <- resL[[sti]]$posteriorEsts
-      } else {
-        posteriorEsts <- merge(posteriorEsts, resL[[sti]]$posteriorEsts, by="id", all=TRUE)
-      }
       # remove, condensation complete
       resL[[sti]]$posteriorEsts <- NULL
-      # get Xb
       co <- resL[[sti]]$coefficients
+      resL[[sti]]$X <- resL[[sti]]$getX(resL[[sti]]$stuDat)
       # remove standard deviation
       Xbi <- as.vector(resL[[sti]]$X %*% co[-length(co)])
       Xbdf <- data.frame(id=rownames(resL[[sti]]$X), xb=Xbi, stringsAsFactors=FALSE)
@@ -431,23 +387,19 @@ mml <- function(formula,
       resL[[sti]]$rr1 <- NULL
       resL[[sti]]$lnlfl <- resL[[sti]]$lnlf
       resL[[sti]]$lnlf <- NULL
-      resL[[sti]]$contrastsl <- resL[[sti]]$contrasts
-      resL[[sti]]$contrasts <- NULL
-      resL[[sti]]$xlevelsl <- resL[[sti]]$xlevels
-      resL[[sti]]$xlevels <- NULL
+      resL[[sti]]$contrastsl <- get("contrasts", envir=environment(resL[[sti]]$getX))
+      resL[[sti]]$xlevelsl <- get("xlevels", envir=environment(resL[[sti]]$getX))
       resL[[sti]]$stdev <- resL[[sti]]$coefficients[length(resL[[sti]]$coefficients)]
-      resL[[sti]]$stuDatl <- resL[[sti]]$stuDat
       resL[[sti]]$stuDat <- NULL
       resL[[sti]]$iter <- resL[[sti]]$iterations
       resL[[sti]]$iterations <- NULL
       resL[[sti]]$coef <- resL[[sti]]$coefficients
       resL[[sti]]$coefficients <- NULL
+      resL[[sti]]$wobs <- resL[[sti]]$weightedObs
+      resL[[sti]]$weightedObs <- NULL
       resL[[sti]]$call <- NULL
       resL[[sti]]$strataVar <- NULL
       resL[[sti]]$PSUVar <- NULL
-      resL[[sti]]$itemScorePoints <- NULL
-      resL[[sti]]$wobs <- resL[[sti]]$weightedObs
-      resL[[sti]]$weightedObs <- NULL
     }
     # store full res list
     resl <- resL
@@ -459,154 +411,22 @@ mml <- function(formula,
     # but need resL to retain for post hoc
 
     # assign variables from the many calls back onto the current frame (the env for this call to mml)
-    setRes(resL, uncollapsed=c("Xl", "rr1l", "stuDatl"),
+    setRes(resL, uncollapsed=c("Xl", "rr1l"),
            exclude=c("idVar","formula","polyModel","paramTab","fast","scale",
-                     "location", "weightVar"))
-    co <- coefficients
-    # merge together posterior estimates
-    # nodes are the same for every run
+                     "location", "weightVar","testScale"))
 
-    if(is.null(weightVar)) {
-      stuDat$one <- 1
-      stuDatl <- lapply(stuDatl, function(x) {
-        x$one <- 1
-        return(x)
-      })
-      weightVar <- "one"
-    }
-    vc <- matrix(0, nrow=length(subtests), ncol=length(subtests))
-
-    diag(vc) <- stdev^2
-    wgt <- stuDat[ , c(idVar, weightVar)]
-    colnames(wgt)[2] <- "w"
-    # vcfmat is the correlation functions, just the portion above the diagonal.
-    # use a list because we're storing functions
-    if(multiCore) {
-      corm <- data.frame(i= rep(1:length(subtests), each=length(subtests)),
-                         j= rep(1:length(subtests), length(subtests)))
-      corm <- corm[corm$i > corm$j, ]
-      corms <- split(corm, 1:nrow(corm))
-      itc <- iter(corms)
-      if(verbose >= 1) {
-        message("Estimating correlations in parallel.")
-      }
-      cori <- foreach(dopari = itc, .packages="Dire", .export = c("optimize", "calcRrij", "mmlCor", "fnCor")) %dopar% {
-        i <- dopari$i
-        j <- dopari$j
-        xbi <- Xb[ , paste0("Xb",i)]
-        xbj <- Xb[ , paste0("Xb",j)]
-        # just cases in both
-        ijss <- !is.na(xbi) & !is.na(xbj)
-        xbi <- xbi[ijss]
-        xbj <- xbj[ijss]
-        # subset rr1 
-        rr1i <- rr1l[[i]]
-        rr1j <- rr1l[[j]]
-        rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
-        rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
-        if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
-          stop("rr1i names do not agree with Xb names.")
-        }
-        if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
-          stop("rr1j names do not agree with Xb names.")
-        }
-        w <- wgt[wgt[,idVar] %in% Xb$id[ijss],]
-        if( all.equal(w[,idVar], Xb$id[ijss])[1] != TRUE) {
-          stop("weigth names do not agree with Xb names.")
-        }
-        vcij <- mmlCor(Xb1=xbi,
-                       Xb2=xbj,
-                       s1=stdev[i],
-                       s2=stdev[j],
-                       rr1=rr1i,
-                       rr2=rr1j,
-                       weights=w$w,
-                       nodes=nodes,
-                       fast=fast)
-        return(list(i=i,j=j,vc=vcij))
-      }
-      # make a long data frame with columns i, j, and cor
-      vclong <- as.data.frame(do.call(rbind, lapply(cori, function(x) { unlist(c(x$i, x$j, x$vc$rho)) } )))
-      colnames(vclong) <- c("i", "j", "cor")
-      for(i in 1:length(subtests)) {
-        for(j in 1:length(subtests)) {
-          if(i > j) {
-            vc[i,j] <- vclong[vclong$i == i & vclong$j == j, "cor"] 
-            vc[j,i] <- vc[i,j]
-            foundSub <- FALSE
-            indi <- 1
-            while(!foundSub) {
-              corii <- cori[[indi]]
-              if(corii$i == i & corii$j == j) {
-                foundSub <- TRUE
-              } 
-              indi <- indi + 1
-            }
-          }
-        }
-      }
-    } else { # end: if(multiCore)
-      # single cor correlation calculation
-      for(i in 1:length(subtests)) {
-        for(j in 1:length(subtests)) {
-          if(i > j) {
-            # subset Xb
-            xbi <- Xb[,paste0("Xb",i)]
-            xbj <- Xb[,paste0("Xb",j)]
-            # just cases in both
-            ijss <- !is.na(xbi) & !is.na(xbj)
-            xbi <- xbi[ijss]
-            xbj <- xbj[ijss]
-            # subset rr1 
-            rr1i <- rr1l[[i]]
-            rr1j <- rr1l[[j]]
-            rr1i <- rr1i[ , colnames(rr1i) %in% Xb$id[ijss]]
-            rr1j <- rr1j[ , colnames(rr1j) %in% Xb$id[ijss]]
-            if( all.equal(colnames(rr1i), Xb$id[ijss])[1] != TRUE) {
-              stop("rr1i names do not agree with Xb names.")
-            }
-            if( all.equal(colnames(rr1j), Xb$id[ijss])[1] != TRUE) {
-              stop("rr1j names do not agree with Xb names.")
-            }
-            w <- wgt[wgt[ , idVar] %in% Xb$id[ijss],]
-            if( all.equal(w[ , idVar], Xb$id[ijss])[1] != TRUE) {
-              stop("weigth names do not agree with Xb names.")
-            }
-            if(verbose >= 1) {
-              message(paste0("Estimating construct correlations between ", subtests[i], " and ", subtests[j]))
-            }
-            vcf <- mmlCor(Xb1=xbi,
-                          Xb2=xbj,
-                          s1=stdev[i],
-                          s2=stdev[j],
-                          rr1=rr1i,
-                          rr2=rr1j,
-                          weights=w$w,
-                          nodes=nodes,
-                          fast=fast)
-            vc[j, i] <- vc[i, j] <- vcf$rho
-          }
-        }
-      }
-    }
-    colnames(vc) <- rownames(vc) <- subtests
     # add names to everything
-    names(stuDatl) <- names(lnlfl) <- names(rr1l) <- names(Xl) <- names(resl) <- subtests
+    #names(stuDatl) <- 
+    names(lnlfl) <- names(rr1l) <- names(Xl) <- names(resl) <- subtests
     names(iter) <- names(obs) <- names(wobs) <- subtests
-    coefM <- matrix(coef, nrow=length(subtests), byrow=TRUE)
-    rownames(coefM) <- subtests
-    colnames(coefM) <- names(coef)[1:ncol(coefM)]
     res <- structure(list(call = call,
-                          coefficients = coefM,
+                          coefficients = mmlc$coefficients,
                           X = Xl,
-                          contrasts = contrastsl,
-                          xlevels = xlevelsl,
                           rr1 = rr1l,
-                          ids = stuDat[[idVar]],
+                          ids = mmlc$stuDat[[idVar]],
                           Convergence = Convergence,
                           lnlfl = lnlfl,
-                          stuDat = stuDatl,
-                          stuItems = stuItems,
+                          stuDat = mmlc$stuDat,
                           weightVar = weightVar,
                           nodes = nodes,
                           iterations = iter,
@@ -618,219 +438,36 @@ mml <- function(formula,
                           strataVar = strataVar,
                           PSUVar = PSUVar,
                           modelFrameFull = mFull,
-                          posteriorEsts = posteriorEsts,
-                          formula = formula),
+                          posteriorEsts = mmlc$posteriorEsts,
+                          formula = formula,
+                          polyModel = polyModel,
+                          stuDatSubsets = mmlc$stuDatSubsets,
+                          values = mmlc$values,
+                          SubscaleVC = mmlc$SubscaleVC
+                          ),
                      class = "mmlCompositeMeans")
-    if(calcCor) {
-      res$SubscaleVC <- vc
+    if (exists("contrastsl", inherits = TRUE)) {
+      res$contrasts <- get("contrastsl", inherits = TRUE)
+    }
+    if (exists("xlevelsl", inherits = TRUE)) {
+      res$xlevels <- get("xlevelsl", inherits = TRUE)
     }
     return(res)
-  } # end if(composite) {
-
-  # done with the left hand side of the formula, if it exists, drop it
-  if(length(formula) > 2) {
-    formula[[2]] <- NULL
-  }
-  # subset stuDat to valid data
-  cc <- complete.cases(stuDat[,c(all.vars(formula), weightVar, strataVar, PSUVar)])
-  stuDat <- stuDat[cc, ]
-  stuItems <- stuItems[stuItems[[idVar]] %in% stuDat[[idVar]],]
-  if(nrow(stuDat) == 0) {
-    stop(paste0("no complete cases in ", dQuote("stuDat"), "."))
-  }
-  if(nrow(stuItems) == 0) {
-    stop(paste0("no complete cases in ", dQuote("stuItems"), "."))
-  }
-
-  # only keep items in the paramTab
-  stuItems <- stuItems[stuItems$key %in% paramTab$ItemID, ]
-  if(nrow(stuItems) == 0) {
-    stop(paste0("no student scored found for any of the relevant items. Check that dichotParamTab and polyParamTab ", dQuote("ItemID"), " columns agree with stuITems ", dQuote("key"), " column values."))
-  }
-  paramTab <- paramTab[order(paramTab$ItemID), ]
-  stu <- stuItems[order(stuItems$key), ]
-  # check response ranges
-  agg <- data.frame(key = unique(stu$key))
-  for(i in 1:nrow(agg)) {
-    agg$scorePoints[i] <- subset(paramTab, ItemID == agg$key[i], "scorePoints")[[1]]
-    vals <- stu$score[stu$key == agg$key[i]]
-    # drop missing code
-    vals <- vals[!vals %in% paramTab$missingCode[paramTab$ItemID == agg$key[i]]]
-    if(agg$scorePoints[i] == 1) {
-      expectedOccupied <- 0:1
-    } else {
-      if(polyModel == "gpcm") {
-        expectedOccupied <- seq(0, agg$scorePoints[i], by=1)
-      } else {
-        expectedOccupied <- seq(1, agg$scorePoints[i]+1, by=1)
-      }
-    }
-    agg$expectedOccupied[i] <- paste( expectedOccupied, collapse=":")
-    agg$occupied[i] <- paste(names(table(vals)), collapse=":")
-    agg$Result[i] <- ifelse( any(!expectedOccupied %in% names(table(vals)) ), "!", "\U02713")
-    # red check overrules other states
-    agg$Result[i] <- ifelse( any(!names(table(vals)) %in% expectedOccupied), "\U274C", agg$Result[i])
-  }
-  rownames(agg) <- paste0(agg$Result, " " , agg$key)
-  agg$score <- NULL
-  agg$key <- NULL
-  if( any(agg$Result %in% "\U274C") ) {
-    agg$Result <- NULL
-    if(verbose >= 1) {
-      print(agg)
-      stop("Some items score points inconsistent with expectations.")
-    }
-    stop("Some items score points inconsistent with expectations; increase verbose level to at least 1 see table.")
-  }
-  agg$Result <- NULL
-  stu <- split(stu, stu[[idVar]])
-
-  # subset to students who have at least one valid score
-  stuDat <- stuDat[stuDat[[idVar]] %in% names(stu), ]
-
-  # now form X
-  trms <- delete.response(terms(formula))
-  m <- model.frame(trms, data=stuDat, drop.unused.levels = TRUE)
-  X <- model.matrix(formula, m)
-  eig <- eigen(crossprod(X))
-  ev <- eig$values/eig$values[1]
-  if(any(ev <= 100 * .Machine$double.eps)) {
-    cs <- colSums(X)
-    cs[cs <= which.min(cs)]
-    message("Thin levels:")
-    print(cs)
-    stop("Nearly singular design matrix. Consider adjusting the model to improve the design matrix.")
-  }
-
-  #for prediction
-  contrasts <- attributes(X)$contrasts
-  xlevels <- .getXlevels(trms, m)
-  rownames(X) <- stuDat[[idVar]]
-  K <- ncol(X) # number of fixed parameters to estimate   
-  nms <- c(colnames(X), 'Population SD') 
-  startVal <- c(rep(0, K), 1)
-  if(nrow(X) != nrow(stuDat)) {
-    stop("Missing values not allowed in independent variables.")
-  }
-  ### These are the exported functions passed to the dopar function
-  nodes <- seq(from = minNode, to = maxNode, length.out = Q)
-
-  ### This portion of the code computes all the likelihood evaluations
-  ### and does so outside of the function that is maximized
-  ### This saves a lot of overhead by using fixed quadrature points
-  if(verbose >= 1) {
-    message("Calculating likelihood function.")
-  }
-  if(multiCore) {
-    # use multiple cores to calculate rr1
-    rr1 <- calcRR1_dopar(stu, Q, polyModel, paramTab, nodes, fast)
-  } else {
-    # calculate rr1 on a single core
-    rr1 <- calcRR1(stu, Q, polyModel, paramTab, nodes, fast)
-  }
-
-  # add names to rr1
-  colnames(rr1) <- names(stu)
-  if(!all.equal(colnames(rr1), stuDat[[idVar]])) {
-    stop("Sorting error in mml.")
-  }
-  eDecomp <- eigen(crossprod(X))
-  if(verbose >= 1) {
-    message(paste0("design matrix condition number = ", round(eDecomp$values[1] / eDecomp$values[length(eDecomp$values)],4) ))
-  }
-  if( (min(eDecomp$values) < 0) || eDecomp$values[1] / eDecomp$values[length(eDecomp$values)] > 1/.Machine$double.eps) {
-    stop("Design matrix exactly singular. Adjust covariates to avoid perfect multicolinearity.")
-  }
+  } else{ # end of composite
+    mmli <- mmlu(formula = formula,
+                 scored_data = scoredTest,
+                 optimizer = optimizer,
+                 verbose = verbose)
+    mmli$call <- call
+    return(mmli)
+  }# end if(composite) {
   
-  fn2 <- fn.regression(X_=X, i=NULL, wv=weightVar, rr1=rr1, nodes=nodes, stuDat=stuDat)
-  opt <- robustOptim(fn2, startVal, verbose=verbose, X=X)
-  posteriorEsts <- fn2(opt$par, returnPosterior=TRUE)
-  names(opt$par) <- c(colnames(X), "s")
-  # default location and scale
-  location <- NA
-  scale <- NA
-  if(!is.null(testScale) & nrow(testScale) == 1) {
-    location <- testScale$location[1]
-    scale <- testScale$scale[1]
-  }
-  if(is.null(weightVar)) {
-    obs <- sum(apply(rr1,2,sum)>0)
-    weightedObs <- obs
-  } else {
-    obs <- sum(stuDat[ , weightVar] > 0 & apply(rr1, 2, sum) > 0) # number with positive weight, at least one response
-    weightedObs <- sum(stuDat[apply(rr1, 2, sum) > 0, weightVar]) # sum of weights for those with positive weight, at least one response
-  }
-  coefficients <- opt$par
-  names(coefficients) <- nms
-  # report on theta scale if no scale found
-  if(is.na(scale) & is.na(location)) {
-    scale <- 1
-    location <- 0
-  }
-  if(is.na(scale) | is.na(location)) {
-    if(is.na(scale)) {
-      warning(paste0("Could not find a valid scale. Resetting to theta scale. Check ", dQuote("testDat"), " argument."))
-    } else {
-      warning(paste0("Could not find a valid location. Resetting to theta scale. Check ", dQuote("testDat"), " argument."))
-    }
-    scale <- 1
-    location <- 0
-  }
-  assign("insd", FALSE, envir=environment(fun=fn2))
-  res <- structure(list(call = call,
-                        coefficients = coefficients,
-                        LogLik = -1/2*opt$value,
-                        X = X,
-                        Convergence = opt$convergence,
-                        location = location,
-                        scale = scale,
-                        lnlf= fn2,
-                        rr1= rr1,
-                        stuDat = stuDat,
-                        stuItems = stuItems,
-                        weightVar = weightVar,
-                        nodes = nodes,
-                        iterations = opt$iter,
-                        obs = obs,
-                        weightedObs = weightedObs,
-                        strataVar = strataVar,
-                        PSUVar = PSUVar,
-                        formula = formula,
-                        contrasts = contrasts,
-                        xlevels = xlevels,
-                        polyModel = polyModel,
-                        paramTab = paramTab,
-                        fast = fast,
-                        idVar = idVar,
-                        posteriorEsts = posteriorEsts,
-                        itemScorePoints = agg),
-                   class = "mmlMeans")
   return(res)
 }
 
-#' @importFrom stats optimize optim reshape rnorm
-mmlCor <- function(Xb1,
-                   Xb2,
-                   s1,
-                   s2,
-                   rr1,
-                   rr2,
-                   nodes,
-                   weights=NULL,
-                   fast=TRUE,
-                   verbose=0) { 
-  # fn2 uses the Fisher-Z transformation
-  # fine rebins rr1 for large correlations where numerical integration becomes difficult
-  fn2f <- fnCor(Xb1=Xb1, Xb2=Xb2, s1=s1, s2=s2, w=weights, rr1=rr1, rr2=rr2, nodes=nodes, fine=TRUE, fast = fast)
-  ## optimize in Fisher-Z space
-  # first ball park
-  opt <- optimize(fn2f, c(1, 3), tol=.Machine$double.eps^0.25)$minimum
-  # transform back to original space and return result
-  return(list(rho=tanh(opt) * s1 * s2, corLnl=fn2f))
-}
 
-
-cleanStuItems <- function(si, stuDat, idVar) {
+#' @importFrom dplyr inner_join
+cleanStuItems <- function(si, stuDat, idVar, paramTab) {
   # make sure every stuItems student has a stuDat student, and the other way around
   if(!inherits(si, "data.frame")) {
     si <- do.call(rbind, si)
@@ -845,7 +482,7 @@ cleanStuItems <- function(si, stuDat, idVar) {
     stop("stuItems missing column(s): ", paste(missingVarsSI, collapse=", "))
   }
   # these are the only columns we need, in this order
-  si <- si[,c(idVar, "key", "score")]
+  si <- si[ , c(idVar, "key", "score")]
   if(any(!si[[idVar]] %in% stuDat[[idVar]])) {
     missing <- (si[[idVar]])[!(si[[idVar]]) %in% stuDat[[idVar]]]
     stop(paste0("The ", dQuote("stuItems"), " argument must be a list with names that correspond to every " , dQuote("idVar"), " in ", dQuote("stuDat"), ". some missing IDs ", pasteItems(dQuote(head(missing,5))), "."))
@@ -853,9 +490,13 @@ cleanStuItems <- function(si, stuDat, idVar) {
   # make sure si and stuDat are in the same order
   si[[idVar]] <- as.character(si[[idVar]])
   si$key <- as.character(si$key)
-  si <- si[order(si[[idVar]]), ]
+  si <- si[order(si[[idVar]], method="radix"), ]
+  si <- si %>%
+    inner_join(paramTab, by = c("key" = "ItemID"))
+  si <- si[ , c(idVar, "key", "score")]
   # drop rows with no test data on them, they get dropped from the likelihood function anyways
-  si <- si[!is.na(si$score),]
+  #si <- si[!is.na(si$score),]
+  si <- si[order(si$key, method="radix"), ]
   return(si)
 }
 
@@ -910,7 +551,7 @@ cleanPolyParamTab <- function(ppt) {
     colnames(ppt)[colnames(ppt)=="d"] <- "itemLocation"
     if(!"itemLocation" %in% colnames(ppt)) {
       ppt$itemLocation <- NA
-    } 
+    }
     i <- 1
     while(paste0("d",i) %in% colnames(ppt)) {
       var <- paste0("d",i)
@@ -920,7 +561,15 @@ cleanPolyParamTab <- function(ppt) {
     }
     # prevent this from being applied twice for composite
     ppt$itemLocation <- NULL 
-    ppt[,"d0"] <- 0
+    if("d0" %in% colnames(ppt)) {
+      if(any(ppt$d0 != 0)) {
+        stop("per the vignette, in polyParamTab argument, the lowest level is named d0 and must always be zero")
+      }
+    } else {
+      warning("polyParamTab missing d0 parameter, setting it to zero.")
+    }
+    ppt$d0 <- 0
+    # make a column that is always NA for subsequnt program to check
     i <- i - 1
     if(any(!is.na(ppt[,paste0("d",i)]))) {
       ppt[,paste0("d",i+1)] <- NA
@@ -928,6 +577,24 @@ cleanPolyParamTab <- function(ppt) {
     reqVar <- c("ItemID", "test", "slope", "scorePoints")
     if(any(!reqVar %in% colnames(ppt))) {
       stop(paste0("polyParamTab must have all of the columns ", pasteItems(reqVar), "."))
+    }
+  }
+  # sort the d variables in hte ouput
+  cn <- colnames(ppt)
+  dvars <- unique(c("d0",dvars))
+  cn <- cn[!cn %in% dvars]
+  ppt <- ppt[,c(cn,dvars)]
+  for(i in seq_along(ppt$scorePoints)) {
+    for(j in 1:(ppt$scorePoints[i] + 1)) { # so that varj covers d0 through d(scorePoints)
+      varj <- paste0("d",j-1)
+      if(!varj %in% colnames(ppt)) {
+        print(ppt[i,])
+        stop(paste0("in polyParamTab argument, item ", ppt$ItemID, " is an item with ", ppt$scorePoints[i], " score points and so polyParamTab must have (at least) columns d0 to d",ppt$scorePoints[i]))
+      }
+      if(is.na(ppt[i,varj])) {
+        print(ppt[i,])
+        stop(paste0("in polyParamTab argument, item ", ppt$ItemID, " is an item with ", ppt$scorePoints[i], " score points and so polyParamTab must have non-missing columns d0 to d",ppt$scorePoints[i], " in the associated row."))
+      }
     }
   }
   return(list(polyParamTab=ppt, dvars=dvars))
@@ -979,37 +646,63 @@ condenseParamTab <- function(dpt, ppt, dvars) {
     paramTab$difficulty <- NA
   }
   paramTab$ItemID <- as.character(paramTab$ItemID)
+  if(!"subtest" %in% colnames(paramTab)) {
+    paramTab$subtest <- "unified"
+  }
+  if(!"missingCode" %in% colnames(paramTab)) {
+    paramTab$missingCode <- NA
+  }
+  paramTab <- paramTab[order(paramTab$ItemID), ]
   return(paramTab)
 }
 
 # optimize fn.regression function fn
 # verbose makes the function say more when verbose gets larger.
 # needed because we use several methods in sucession
-robustOptim <- function(fn, X, par0=NULL, verbose=0) {
-  fnDerivs <- getDerivs(fn)
+#' @importFrom stats optim
+robustOptim <- function(fn, X, par0=NULL, verbose=0, fixedSD=NULL) {
+  fnDerivs <- getDerivs(fn, fixedSD)
   if(verbose >= 1) {
     message("Initial optimization with optim using the L-BFGS-B method in optim.")
   }
-  opt <- optim(par0, fn=fn, gr=fnDerivs$grad, method="L-BFGS-B", control=list(maxit=1e5, factr = 1e-10, trace = verbose >= 2, lmm=10, parscale=1/c(pmax(1,apply(X,2,sd)),1)))
-  if(verbose >= 1) {
-    message("Second optimization with lbfgs::lbfgs.")
+  if(!is.null(fixedSD)) {
+    fn_final_factory <- function(fixedSD, fn) {
+      function(x) {
+        return(fn(x,fixedSD))
+      }
+    }
+    fn_final <- fn_final_factory(fixedSD, fn)
+    par0 
+  } else {
+    fn_final <- fn
   }
-  opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
+  opt <- optim(par0, fn=fn_final, gr=fnDerivs$grad, method="L-BFGS-B", control=list(maxit=1e5, factr = 1e-10, trace = verbose >= 2, lmm=10, parscale=1/c(pmax(1,apply(X,2,sd)),1)))
+  if(is.null(fixedSD)) {
+    opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
+  }
   fng <- fnDerivs$grad
   gr <- fng(opt$par)
   # this is the minimum value. Rest if it steps that far out
   if(sqrt(sum(gr^2)) / max(1, sqrt(sum(opt$par^2))) > 1e-5) {
-    opt <- lbfgs::lbfgs(call_eval=fn,
+    if(verbose >= 1) {
+      message("Second optimization with lbfgs::lbfgs.")
+    }
+    opt <- lbfgs::lbfgs(call_eval=fn_final,
                         call_grad=fnDerivs$grad,
                         vars=opt$par,
                         invisible=ifelse(verbose > 2, 0, 1), # a backwards verbose
                         epsilon= 1e-5, # gradient convergence criterion
                         max_iterations=1e5,
                         m=max(6, sqrt(length(par0))))
+    # these seem to indicate convergence,
+    if(opt$convergence %in% c(-1001, -998)) {
+      opt$convergence <- 0
+    }
   }
-  opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
-  # map the SD term back
-  opt$par[length(opt$par)] <- sqrt(ifelse(opt$par[length(opt$par)] < 1, exp(opt$par[length(opt$par)] - 1), opt$par[length(opt$par)]^2))
+  if(is.null(fixedSD)) {
+    opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
+    opt$par[length(opt$par)] <- sqrt(ifelse(opt$par[length(opt$par)] < 1, exp(opt$par[length(opt$par)] - 1), opt$par[length(opt$par)]^2))
+  }
   if(opt$convergence %in% c(0)) {
     convergence <- "converged"
   } else {
@@ -1023,107 +716,29 @@ robustOptim <- function(fn, X, par0=NULL, verbose=0) {
   if(!"iterations" %in% names(opt)) {
     opt$iterations <- -1
   }
+  if(!is.null(fixedSD)) {
+    opt <- c(opt, fixedSD)
+  }
   return(opt)
 }
 
-grad_descent <- function(x0, fn, grf, max_it = 10 * length(x0), verbose=0, c1=0.001, c2=0.1) {
-  x <- x0
-  fx <- fn(x)
-  gx <- grf(x)
-  alpha <- 1
-  itter <- 0
-  while(itter < max_it && sqrt(sum(gx^2))/max(1,sqrt(sum(x^2))) > 1e-5) {
-    #it's possible to get stuck in a oscelator in a nice quadratic peak. This stops that.
-    alpha <- alpha / 2
-    itter <- itter + 1
-    wolf_conds_met <- FALSE
-    mina <- 0
-    maxa <- Inf
-    cat("  alpha =",alpha,"\n")
-    while(!wolf_conds_met) {
-      w1met <- checkW1(fn, grf, x, gx, fx, alpha, c1)
-      w2met <- checkW2(fn, grf, x, gx, fx, alpha, c2)
-      wolf_conds_met <- w1met && w2met
-      if(!wolf_conds_met) {
-        if(!w1met) {
-          maxa <- min(maxa, alpha)
-        }
-        if(!w2met) {
-          mina <- max(mina, alpha)
-        }
-        if(maxa < Inf) {
-          alpha <- (mina + maxa)/ 2
-        } else {
-          alpha <- alpha * 2
-        }
-      }
-      
-    }
-    x <- x + alpha * gx
-    fx <- fn(x)
-    gx <- grf(x)
-    if(verbose > 0) {
-      cat("value = ", format(fx, digits=16), " gradient condition =", format(sum(abs(gx))/(length(x0) * 1e-5), digits=16), " > 1 \n")
-    }
-  }
-  return(x)
-}
 
-getDerivs <- function(fn) {
+getDerivs <- function(fn, fixedSD=NULL) {
   fnGrad <- function(par) {
-    fn(par, gr=TRUE)
+    if(is.null(fixedSD)) {
+      return(fn(par, gr=TRUE))
+    } else {
+      return(fn(c(par, fixedSD), gr=TRUE))
+    }
   }
   fnHess <- function(par) {
-    fn(par, hess=TRUE)
+    if(is.null(fixedSD)) {
+      return(fn(par, hess=TRUE))
+    } else {
+      return(fn(c(par, fixedSD), hess=TRUE))
+    }
   }
   return(list(grad=fnGrad, hess=fnHess))
-}
-
-Newton <- function(par0, iter0, verbose, fn, fng, fnh) {
-  # push to actual convergence
-  opt <- list(par=par0, iter=iter0, convergence=0)
-  # get an actual gr, maybe we don't need more refinement
-  gr <- fng(opt$par)
-  # this is the minimum value. Rest if it steps that far out
-  opt$par[length(opt$par)] <- max(log(1e-6)+2, opt$par[length(opt$par)])
-  # first try BFGS
-  gr_prev <- 2*max(abs(gr)) # allows the first condition alone to decide if it is a good idea to try BFGS
-  while(sqrt(sum(gr)) / max(1, sqrt(sum(opt$par^2))) < 1e-5 && opt$iter < 50 + iter0) {
-    if(iter0 == opt$iter && verbose >= 1) {
-      message("Further refining optimization with Newton's method.")
-    }
-    gr <- fng(opt$par)
-    H <- fnh(opt$par)
-    if(any(H %in% c(NA, NaN, Inf, -Inf))) {
-      stop("Hessian is not defined.")
-    }
-    # sometimes H is just not PD, adjust it slightly to be PD in that case
-    H <- nearPD2(H)
-    update <- qr.solve(qr(H), -1*gr)
-    opt$par <- opt$par + update
-    opt$iter <- opt$iter + 1
-    if(verbose >= 2) {
-      message(paste0("  step =", opt$iter - iter0))
-      message(paste0("    lnl =", fn(opt$par)))
-      message(paste0("    ||gradient||2=", sqrt(sum(gr^2))))
-      message(paste0("    max gradient=", max(abs(gr))))
-      message(paste0("    ||step||2=", sqrt(sum(update^2))))
-      message(paste0("    max step =", max(abs(update))))
-    }
-    gr <- gr / pmax(1, opt$par)
-    # this is the minimum value. Reset if it steps that far out
-    opt$par[length(opt$par)] <- max( (log(1e-6)+1), opt$par[length(opt$par)])
-  }
-  if(opt$iter == 50 + iter0) {
-    opt$convergence <- "max iterations reached"
-    warning("Convergence not reached. Try scaling parameters.")
-  }
-  opt$par <- as.vector(opt$par)
-  opt$value <- fn(opt$par)
-  if(verbose >= 2) {
-    message(paste0("final lnl=", opt$value))
-  }
-  return(opt)
 }
 
 # assign variables from the many calls of a composite back onto the current frame
@@ -1163,10 +778,16 @@ gidentity <- function(...) {
   return(inputs)
 }
 
-checkW1 <- function(fn, grf, x, gx, fx, alpha, c1) {
-  fn(x + alpha * gx) <= fx + c1 * alpha * sum(gx^2)
+checkTestScale <- function(ts) {
+  if(!all(c("test", "location", "scale") %in% colnames(ts))) {
+    stop("the argument ", dQuote("testScale"), " must have columns: test, location, and scale")
+  }
+  if("subtest" %in% colnames(ts)) {
+    if(!"subtestWeight" %in% colnames(ts)) {
+      stop(paste0("when you include the column ", dQuote("subscales"), " in the ", dQuote("testScale"), " argument, you must also include the column ", dQuote("subtestWeight")))
+    }
+  }
+  ts
 }
 
-checkW2 <- function(fn, grf, x, gx, fx, alpha, c2) {
-  -gx * grf(x + alpha * gx) <= -c2 * sum(gx^2)
-}
+

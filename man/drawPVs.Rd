@@ -4,35 +4,47 @@
 \alias{drawPVs}
 \alias{drawPVs.summary.mmlMeans}
 \alias{drawPVs.mmlMeans}
+\alias{drawPVs.summary.mmlCompositeMeans}
 \alias{drawPVs.mmlCompositeMeans}
 \title{Draw plausible values (PVs) from an mml fit}
 \usage{
-drawPVs(x, npv, pvVariableNameSuffix = "_dire", ...)
+drawPVs(
+  x,
+  npv,
+  pvVariableNameSuffix = "_dire",
+  stochasticBeta = deprecated(),
+  ...
+)
 
-\method{drawPVs}{summary.mmlMeans}(x, npv = 5L, pvVariableNameSuffix = "_dire", ...)
+\method{drawPVs}{summary.mmlMeans}(
+  x,
+  npv = 5L,
+  pvVariableNameSuffix = "_dire",
+  stochasticBeta = deprecated(),
+  ...
+)
 
 \method{drawPVs}{mmlMeans}(
   x,
   npv = 5L,
   pvVariableNameSuffix = "_dire",
-  stochasticBeta = FALSE,
-  normalApprox = TRUE,
-  newStuDat = NULL,
-  newStuItems = NULL,
-  returnPosterior = FALSE,
-  construct = NULL,
+  stochasticBeta = deprecated(),
+  ...
+)
+
+\method{drawPVs}{summary.mmlCompositeMeans}(
+  x,
+  npv = 20L,
+  pvVariableNameSuffix = "_dire",
+  stochasticBeta = deprecated(),
   ...
 )
 
 \method{drawPVs}{mmlCompositeMeans}(
   x,
-  npv = 5L,
+  npv = 20L,
   pvVariableNameSuffix = "_dire",
-  stochasticBeta = FALSE,
-  normalApprox = TRUE,
-  newStuDat = NULL,
-  newStuItems = NULL,
-  verbose = TRUE,
+  stochasticBeta = deprecated(),
   ...
 )
 }
@@ -43,43 +55,12 @@ drawPVs(x, npv, pvVariableNameSuffix = "_dire", ...)
 
 \item{pvVariableNameSuffix}{suffix added to new PV variables after construct name and before the plausible value ID. For example, if there is a construct \code{math} and the suffix is the default \code{_dire}, then the fourth plausible value would have a column name, \code{math_dire4}.}
 
-\item{...}{additional parameters}
+\item{stochasticBeta}{deprecated.}
 
-\item{stochasticBeta}{logical when \code{TRUE} the regression coefficients will be drawn from their posterior distribution. Can also be a data frame of values (see Details).}
-
-\item{normalApprox}{logical must be \code{TRUE} to use the normal approximation to the posterior distribution rather than drawing from the actual posterior distribution.}
-
-\item{newStuDat}{new \code{stuDat} object, (see \code{\link{mml}}) for which plausible values will be drawn}
-
-\item{newStuItems}{new \code{stuItems} object, (see \code{\link{mml}}); unlike in \code{mml} students with no items can be passed to this function}
-
-\item{returnPosterior}{logical set to \code{TRUE} to change output to include two additional data frames (see Value).}
-
-\item{construct}{character, changes the name of the columns in the final data frame}
-
-\item{verbose}{logical set to \code{TRUE} to see the status of the processing}
+\item{\dots}{additional parameters passed on to methods.}
 }
 \value{
-when \code{returnPosterior} is FALSE returns a object of class \code{DirePV} which is a list of two elements.
-first, a data frame with a row for every row of newStuDat (or the original stuDat object)
-\itemize{
-\item{\code{id} the value of \code{idVar} in the model run}
-\item{\code{[construct][pvVariableNameSuffix][L]} every other column is a plausible value of this format.
-                                            The \code{[construct]} is the name of the construct,
-                                            the \code{[pvVariableNameSuffix]} is the value of the \code{pvVariableNameSuffix} argument, and
-                                            the \code{[L]} part is the plausible value index, from 1 to \code{npv}.}
-}
-The second argument is named \code{newpvvars} and is a list with an element for each set of construct that lists all of the variables in that construct.
-
-When \code{returnPosterior} is TRUE returns \code{list} with three elements. One is named \code{posterior} and has one
-row per \code{idvar} level in the \code{newStuDat} argument and three columns:
-\itemize{
-\item{\code{id} the value of \code{idVar} in the model run}
-\item{\code{mu} the posterior mean}
-\item{\code{sd} the posterior standard deviation}
-}
-the second list element is named \code{X} that is the design matrix for \code{newStuDat} (see Value for \code{\link{mml}}). The third list element is 
-the \code{rr1} element returned from \code{\link{mml}} with one column for each individual in \code{newStuDat} (see Value in \code{\link{mml}}).
+the \code{stuDat} attribute of the \code{\link{mml}} fit object, \code{x}, with columns for the new plausible values.
 }
 \description{
 Draw plausible values (PVs) from an mml fit

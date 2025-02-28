@@ -6,15 +6,15 @@
 \usage{
 mml(
   formula,
-  stuItems,
+  stuItems = NULL,
   stuDat,
   idVar,
   dichotParamTab = NULL,
   polyParamTab = NULL,
   testScale = NULL,
-  Q = 30,
-  minNode = -4,
-  maxNode = 4,
+  Q = 66,
+  minNode = -5,
+  maxNode = 5,
   polyModel = c("GPCM", "GRM"),
   weightVar = NULL,
   multiCore = FALSE,
@@ -22,23 +22,21 @@ mml(
   composite = TRUE,
   strataVar = NULL,
   PSUVar = NULL,
-  fast = TRUE,
-  calcCor = TRUE,
-  verbose = 0
+  fast = NULL,
+  calcCor = NULL,
+  verbose = 0,
+  retainedInformation = 1,
+  optimizer = c("EM", "QN")
 )
 }
 \arguments{
 \item{formula}{a \ifelse{latex}{\code{formula}}{\code{\link[stats]{formula}}}
 object in the style of \ifelse{latex}{\code{lm}}{\code{\link[stats]{lm}}}}
 
-\item{stuItems}{a \code{data.frame} where each row represents a single student's response to one item.
-The columns must include the \code{idVar} column, a \code{key} column, and a
-\code{score} column. Values in the \code{score} column are checked against expectations
-(based on \code{dichotParamTab} and \code{polyParamTab}) and when
-\code{verbose} is >= 1 a table of expected and actual levels is printed.}
+\item{stuItems}{deprecated. Simply put items in \code{stuDat} now.}
 
 \item{stuDat}{a \code{data.frame} with a single row per student. Predictors in
-the \code{formula} must be in \code{stuDat}.}
+the \code{formula} must be in \code{stuDat} as well as items.}
 
 \item{idVar}{a variable name on \code{stuDat} that is the identifier. Every 
 ID from \code{stuDat} must appear on \code{stuItems} and vice versa.}
@@ -61,9 +59,7 @@ or \code{GRM} for the Graded Response Model}
 
 \item{weightVar}{a variable name on \code{stuDat} that is the full sample weight}
 
-\item{multiCore}{allows the \code{foreach} package to be used. You should
-                 have already setup the 
-\ifelse{latex}{the \code{registerDoParallel} function in the \code{doParallel} package}{\code{\link[doParallel]{registerDoParallel}}}.}
+\item{multiCore}{a logical indicating whether to use parallel processing}
 
 \item{bobyqaControl}{deprecated. A list that gets passed to the \code{bobyqa} optimizer in \code{minqa}}
 
@@ -78,12 +74,17 @@ stratum for each row. Used in post-hoc robust variance estimation.}
 (PSU) variable. Used in post-hoc robust variance estimation. The values
 do not need to be unique across strata.}
 
-\item{fast}{a logical indicating if cpp code should be used in \code{mml} processes. This should 
-yield speed-ups to runs.}
+\item{fast}{deprecated. Always TRUE now.}
 
-\item{calcCor}{set to \code{TRUE} to calculate covariances. Needed to estimate variances and form plausible values}
+\item{calcCor}{deprecated. Always TRUE now.}
 
 \item{verbose}{integer, negative or zero for no details, increasingly verbose messages at one and two}
+
+\item{retainedInformation}{set to a value of 1 to fit the model as is typically fit. If the value is less than one, a principal component analysis is performed and columns associated with principal components totaling at least \code{retainedInformation} are retained while all other data is discarded. The estimated latent regression coefficients will accordingly be named as PC1, ..., PCN.}
+
+\item{optimizer}{character naming the optimization method to use;
+one of \code{EM} for Expectation Maximization
+or \code{QN} for Quasi-Newton}
 }
 \value{
 When called for a single subscale or overall score, returns object of class \code{mmlMeans}. 
@@ -92,22 +93,24 @@ This is a list with elements:
 \item{\code{call} the call used to generate this \code{mml.means} object}
 \item{\code{coefficients} the unscaled marginal maximum likelihood regression coefficients}
 \item{\code{LogLik} the log-likelihood of the fit model}
-\item{\code{X} the design matrix of the marginal maximum likelihood regression}
+\item{\code{getX} a function that, when called on \code{stuDat}, returns the design matrix of the marginal maximum likelihood regression}
 \item{\code{Convergence} a convergence note from the optimizer}
 \item{\code{location} used for scaling the estimates}
 \item{\code{scale} used for scaling the estimates}
-\item{\code{lnlf} the log-likelihood function of the unscaled parameters} 
+\item{\code{lnlf} the log-likelihood function of the unscaled parameters}
+\item{\code{funcs} a list of functions that may be evaluated on a vector of parameters. The first returns the log-likelihood of the marginal maximum likelihood regression evaluated at the given parameters. The second and third correspond to the first and second derivatives, respectively, of the MML regression evaluated at the parameters.}  
 \item{\code{rr1} the density function of each individual, conditional only on item responses in \code{stuItems}}
 \item{\code{stuDat} the \code{stuDat} argument}
+\item{\code{likelihood_stus} \code{rr1}, but pivoted long so that each row corresponds to a student.}
 \item{\code{weightVar} the name of the weight variable on \code{stuDat}}
 \item{\code{nodes} the nodes the likelihood was evaluated on}
 \item{\code{iterations} the number of iterations required to reach convergence}
 \item{\code{obs} the number of observations used}
+\item{\code{testScale} the \code{testScale} used to scale the data}
 \item{\code{weightedObs} the weighted N for the observations}
 \item{\code{strataVar} the column name of the stratum variable on stuDat; potentially used for variance estimation}
 \item{\code{PSUVar} the column name of the PSU variable on stuDat; potentially used for variance estimation}
 \item{\code{itemScorePoints} a data frame that shows item IDs, the number of score points, expected scores (both from the paramTab arguments), as well as the occupied score points}
-\item{\code{stuItems} the data frame passed to \code{mml} reformatted for use in mml}
 \item{\code{formula} the formula passed to \code{mml}}
 \item{\code{contrasts} the contrasts used in forming the design matrix}
 \item{\code{xlevels} the levels of the covariates used in forming the design matrix}
@@ -116,6 +119,9 @@ This is a list with elements:
 \item{\code{fast} the value of the argument of the same name passed to \code{mml}}
 \item{\code{idVar} the value of the argument of the same name passed to \code{mml}}
 \item{\code{posteriorEsts} the posterior estimates for the people in \code{stuDat} included in the model}
+\item{\code{pred} the predicted outcome based on the estimated coefficients}
+\item{\code{values} a list of values used for posterior estimation}
+\item{\code{V} a diagonal matrix of the number of columns in the design matrix}
 }
 
 When a composite score is computed there are several subscales run and the return is a \code{mmlCompositeMeans}. Many elements are themselves list with one element per construct.
@@ -135,7 +141,7 @@ this is a list with elements:
 \item{\code{obs} a vector of the the number of observations used on each construct}
 \item{\code{testScale} the \code{testScale} used to scale the data}
 \item{\code{weightedObs} a vector of the weighted N for the observations}
-\item{\code{SubscaleVC} the covariance matrix of subscales. The residuals are assumed to be multivariate normal with this covairiance matrix}
+\item{\code{SubscaleVC} the covariance matrix of subscales. The residuals are assumed to be multivariate normal with this covariance matrix}
 \item{\code{idVar} the name of the identifier used on \code{stuDat} and \code{stuItems} data}
 \item{\code{resl} list of mmlMeans objects, one per construct}
 \item{\code{strataVar} the column name of the stratum variable on \code{stuDat}; potentially used for variance estimation}
@@ -147,6 +153,9 @@ this is a list with elements:
 \item{\code{polyModel} the value of the argument of the same name passed to \code{mml}}
 \item{\code{posteriorEsts} the list of posterior estimates for the people in \code{stuDat} included in the model}
 \item{\code{SubscaleVC} the matrix of latent correlations across constructs}
+\item{\code{modelFrameFull} the full model frame}
+\item{\code{stuDatSubsets} a logical matrix with a column per subscale and a row for each student; used for subsetting students within subscales}
+\item{\code{values} a list of values used for posterior estimation}
 }
 
 \code{LogLik} is not returned because there is no likelihood for a composite model.
@@ -285,7 +294,7 @@ polyParamTab <- data.frame(ItemID = factor(c("m0757cl", "m066501")),
                            d2 = c(-0.57, 0.56),
                            d3 = c(-1.18, NA),
                            D = c(1.7, 1.7),
-                           scorePoints = c(4L, 3L)) # number of score points, read d1 to d(n-1)
+                           scorePoints = c(3L, 2L)) # number of score points, read d1 to d(n-1)
 # read-in NAEP Primer data 
 sdf <- readNAEP(system.file("extdata/data", "M36NT2PM.dat", package = "NAEPprimer"))
 # read in these items
@@ -294,8 +303,9 @@ items <- c(as.character(dichotParamTab$ItemID), as.character(polyParamTab$ItemID
 # origwt, full sample weights
 # repgrp1, stratum indicator
 # jkunit, PSU indicator
-edf <- getData(data=sdf, varnames=c(items, "dsex", "origwt", "repgrp1", "jkunit", "sdracem"),
-               omittedLevels = FALSE, returnJKreplicates=FALSE)
+edf <- EdSurvey::getData(data=sdf,
+                         varnames=c(items, "dsex", "origwt", "repgrp1", "jkunit", "sdracem"),
+                         dropOmittedLevels = FALSE, returnJKreplicates=FALSE)
 # make up a student ID
 edf$sid <- paste0("S",1:nrow(edf))
 # apply simplified scoring
@@ -306,7 +316,8 @@ for(i in 1:length(items)) {
   edf[,rawcol] <- edf[,coli]
   if( coli \%in\% dichotParamTab$ItemID) {
     edf[,coli] <- ifelse(grepl("[ABCDE]", edf[,rawcol]), 0, NA)
-    edf[,coli] <- ifelse(grepl("*", edf[,rawcol]), 1, edf[,coli])
+    edf[,coli] <- ifelse(grepl("Incorrect", edf[,rawcol]), 0, edf[,coli])
+    edf[,coli] <- ifelse(grepl("[*]", edf[,rawcol]), 1, edf[,coli])
   } else {
     # scale for m066501
     edf[,coli] <- ifelse(grepl("Incorrect", edf[,rawcol]), 0, NA)
@@ -319,14 +330,10 @@ for(i in 1:length(items)) {
     edf[,coli] <- ifelse(grepl("Three correct", edf[,rawcol]), 3, edf[,coli])
   }
   edf[,rawcol] <- NULL # delete original
-}
+} # end scoreing
 
-# stuItems has one row per student/item combination
-stuItems <- edf[,c("sid", items)]
-stuItems <- reshape(data=stuItems, varying=c(items), idvar=c("sid"),
-                    direction="long", v.names="score", times=items, timevar="key")
 # stuDat is one row per student an contains student-level information
-stuDat <- edf[,c("sid", "origwt", "repgrp1", "jkunit", "dsex", "sdracem")]
+stuDat <- edf[,c("sid", "origwt", "repgrp1", "jkunit", "dsex", "sdracem", items)]
 
 # testDat shows scaling and weights for subtests, an overall score can be treated as a subtest
 testDat <- data.frame(test=c("composite", "composite") ,
@@ -337,48 +344,47 @@ testDat <- data.frame(test=c("composite", "composite") ,
 
 # estimate a regression for Algebra subscale
 mmlA <- mml(alg ~ dsex,
-            stuItems=stuItems, stuDat=stuDat,
+            stuDat=stuDat,
             dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             testScale=testDat,
             idVar="sid", weightVar="origwt", # these are column names on stuDat
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
-mmlAs <- summary.mmlMeans(mmlA, varType="Taylor")
+summary(mmlA)
 
 
 # estimate a regression for Numeracy subscale
 mmlN <- mml(num ~ dsex,
-            stuItems=stuItems, stuDat=stuDat,
+            stuDat=stuDat,
             dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             testScale=testDat,
+            Q=128,
             idVar="sid", weightVar="origwt", # these are column names on stuDat
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
-mmlNs <- summary.mmlMeans(mmlN, varType="Taylor")
-mmlNs
+summary(mmlN)
 
 # draw plausible values for mmlA
-head(pvd <- drawPVs.mmlMeans(mmlA))
-# alternative specification
-head(pvs <- drawPVs.mmlMeans(summary.mmlMeans(mmlA, varType="Taylor"), stochasticBeta=TRUE))
+pvd <- drawPVs(summary(mmlA))
+head(pvd)
 
 # composite regression 
 mmlC <- mml(composite ~ dsex ,
-            stuItems=stuItems, stuDat=stuDat,
+            stuDat=stuDat,
             dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
             testScale=testDat,
             idVar="sid", weightVar="origwt", # these are column names on stuDat
             strataVar="repgrp1", PSUVar="jkunit")
 # summary, with Taylor standard errors
-summary(mmlC, varType="Taylor")
+mmlCsum <- summary(mmlC)
+mmlCsum # show results
 
-# draw plausible values for mmlC
-head(pvd <- drawPVs.mmlCompositeMeans(mmlC))
-# alternative specification 
-mmlCsum <- summary.mmlCompositeMeans(mmlC, varType="Taylor")
-head(pvs <- drawPVs.mmlCompositeMeans(mmlCsum, stochasticBeta=TRUE))
+# draw plausible values for mmlC, show first few rows
+pvc <- drawPVs(mmlCsum)
+head(pvc)
 
 }
+
 }
 \author{
 Harold Doran, Paul Bailey, Claire Kelley, Sun-joo Lee, and Eric Buehler

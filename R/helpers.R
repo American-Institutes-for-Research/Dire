@@ -13,7 +13,7 @@ predict.mmlMeans <- function(object, newData=NULL, ...) {
     m <- model.frame(trms, data=newData, drop.unused.levels=TRUE)
     X <- model.matrix(trms, m, contrasts.arg = object$contrasts, xlev = object$xlevels)
   } else {
-    X <- object$X
+    X <- object$getX(object$stuDat)
   }
   b <- object$coef
   pred <- X %*% b[-length(b)]
@@ -25,10 +25,10 @@ predict.mmlMeans <- function(object, newData=NULL, ...) {
 #' @export
 predict.mmlCompositeMeans <- function(object, newData=NULL, ...) {
   if(is.null(newData)) {
-    newData <- as.data.frame(object$Xfull)
+    newData <- object$stuDat
   }
   res <- data.frame(id=rownames(newData), stringsAsFactors=FALSE)
-  for(i in 1:length(object$X)) {
+  for(i in 1:length(object$resl)) {
     newObj <- list(formula = object$formula,
                    contrasts = object$contrasts[[i]],
                    xlevels = object$xlevels[[i]],
@@ -54,257 +54,19 @@ mml.remap.coef <- function(coefficients, location, scale, noloc=FALSE) {
   return(coefficients)
 }
 
-#' @importFrom stats cov2cor pt
-#' @method summary mmlCompositeMeans
-#' @export
-summary.mmlCompositeMeans <- function(object, gradientHessian=FALSE,
-                                      varType=c("Taylor", "Partial Taylor"),
-                                      clusterVar=NULL, jkSumMultiplier=1, # cluster
-                                      repWeight=NULL, # replicate
-                                      strataVar=NULL, PSUVar=NULL, singletonFix=c("drop", "use mean"),# Taylor
-                                      ...){
-  # EdSurvey 2.7.1 compatibility
-  varType0 <- c("consistent", "robust", "cluster", "replicate", "Taylor")
-  if(length(varType) == length(varType0) && all(varType == varType0)) {
-    varType <- "Taylor"
-  }
-  varType <- match.arg(varType)
-  sumCall <- match.call()
-  # get varType and singletonFix cleaned up
-  singletonFix <- match.arg(singletonFix)
-  if(is.null(strataVar)) {
-    if(is.null(object$strataVar) & varType %in% c("Taylor", "Partial Taylor")) {
-      stop(paste0("argument ", dQuote("strataVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
-    }
-    strataVar <- object$strataVar
-  }
-  if(is.null(PSUVar)) {
-    if(is.null(object$PSUVar) & varType %in% c("Taylor", "Partial Taylor")) {
-      stop(paste0("argument ", dQuote("PSUVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
-    }
-    PSUVar <- object$PSUVar
-  }
-  # first
-  M <- nrow(object$coefficients)
-  k <- ncol(object$coefficients)
-  rawCoef <- object$coefficients
-  # the H_B_prime0 and (later) VCfull are block diagonal matrixes
-  # "block" is a list where each element is every index for that block
-  block <- list()
-  for(i in 1:M) {
-    block <- c(block, list(1:k + k*(i-1)))
-  }
-
-  # build H_B_prime
-  H_B_prime0 <- matrix(0, nrow=k*M, ncol=k*M)
-  for(i in 1:nrow(rawCoef)) {
-    obji <- list(lnlf = object$lnlfl[[i]],
-                 coefficients = rawCoef[i, ],
-                 X = object$X[[i]],
-                 stuDat = object$stuDat[[i]],
-                 rr1 = object$rr1[[i]],
-                 nodes = object$nodes,
-                 weightVar = object$weightVar)
-    ih <- getIHessian.mmlMeans(obji, gradientHessian=gradientHessian)
-    H_B_prime0[block[[i]], block[[i]]] <- ih
-  }
-  # get weighted obs, if relevant
-  if(is.null(object$weightVar)) {
-    wo <- NA
-  } else {
-    wo <- object$weightedObs
-  }
-
-  if(varType=="consistent") {
-    V0 <- -1 * H_B_prime0
-  }
-  if(varType=="robust") {
-    varsL <- list()
-    V0 <- 0 * H_B_prime0
-    for(i in 1:M) {
-      obj <- list(X = object$X[[i]],
-                  stuDat = object$stuDat[[i]],
-                  coefficients = rawCoef[i, ],
-                  rr1 = object$rr1[[i]],
-                  nodes = object$nodes)
-      Vi <- getVarRobust(obj, H_B_prime0[block[[i]], block[[i]]])
-      V0[block[[i]], block[[i]]] <- Vi
-    }
-  }
-  if(varType=="Partial Taylor") {
-    V0 <- 0 * H_B_prime0
-    dof <- Inf
-    for(i in 1:M) {
-      obj <- list(X = object$X[[i]],
-                  stuDat = object$stuDat[[i]],
-                  coefficients = rawCoef[i, ],
-                  rr1 = object$rr1[[i]],
-                  nodes = object$nodes,
-                  weightVar = object$weightVar)
-      Vi <- getVarTaylor(object=obj, H_B_prime = H_B_prime0[block[[i]], block[[i]]],
-                         strataVar = strataVar, PSUVar = PSUVar,
-                         singletonFix = singletonFix,
-                         returnVecs=FALSE)
-      V0[block[[i]], block[[i]]] <- Vi$VC
-      # somewhat conservative
-      dof <- min(dof, Vi$simple_dof[1])
-    }
-    dof <- rep(dof, ncol(Vi$VC))
-    td <- object$testScale
-    VCfull <- V0
-    sVC <- object$SubscaleVC
-    for(i in 1:M) {
-      for(j in 1:M) {
-        if(i > j) {
-          # block i, j
-          VCfull[block[[i]], block[[j]]] <- td$scale[i] * td$scale[j] * cov2cor(sVC)[i,j] *
-                                            sign(VCfull[block[[i]], block[[i]]] * VCfull[block[[j]], block[[j]]]) *
-                                            sqrt(abs(VCfull[block[[i]], block[[i]]] * VCfull[block[[j]], block[[j]]]))
-          # symetric matrix, so also set block j, i
-          VCfull[ block[[j]],block[[i]]] <- t(VCfull[block[[i]], block[[j]]])
-        }      
-      }
-    }
-    # now scale within moddle covariances
-    for(i in 1:M) {
-      VCfull[block[[i]], block[[i]]] <- td$scale[i]^2 * VCfull[block[[i]], block[[i]]]
-    }
-  }
-  if(varType=="Taylor") {
-    Vi <- list()
-    dof <- Inf
-    for(i in 1:M) {
-      obj <- list(X = object$X[[i]],
-                  stuDat = object$stuDat[[i]],
-                  coefficients = rawCoef[i, ],
-                  rr1 = object$rr1[[i]],
-                  nodes = object$nodes,
-                  weightVar = object$weightVar)
-      Vii <- getVarTaylor(object=obj, H_B_prime = H_B_prime0[block[[i]], block[[i]]],
-                          strataVar = strataVar, PSUVar = PSUVar,
-                          singletonFix = singletonFix,
-                          returnVecs=TRUE)
-      Vi[[i]] <- Vii$vec
-      dof <- min(dof, Vii$simple_dof)
-    }
-    dof <- rep(dof, ncol(object$coef))
-    str <- lapply(1:length(Vi[[1]]), function(strati) {
-      lapply(1:length(Vi[[1]][[strati]]), function(psui) {
-        res <- c()
-        for(vi in 1:length(Vi)) {
-          res <- c(res, Vi[[vi]][[strati]][[psui]])
-        }
-        return(res)
-      })
-    })
-    # aggregate V_a
-    num2 <- num <- rep(0, ncol(H_B_prime0))
-    numStrata <- 0
-    Vi <- 0 * H_B_prime0
-    for(i in seq_along(str)) {
-      st <- str[[i]]
-      npsu <- length(st)
-      if(npsu > 1) {
-        v_a <- lapply(st, FUN=function(s){
-          (s) %*% t(s)
-        })
-        st$V_a <- (npsu/(npsu-1))*Reduce("+", v_a)
-        numStrata <- numStrata + 1
-        numi <- diag(Vii <- H_B_prime0 %*% st$V_a %*% H_B_prime0)
-        num <- num + numi 
-        num2 <- num2 + numi^2
-        Vi <- Vi + Vii
-      } else {
-        stop("error in getVarTaylor, please contact Dire developers.")
-      }
-    }
-    #sum variance across over all strata
-    td <- object$testScale
-    V0 <- Vi
-    VCfull <- V0
-    sVC <- object$SubscaleVC
-    # add covariance here,
-    # update VCfull along diag below so we don't muddle the update of the covariances
-    for(i in 1:M) {
-      for(j in 1:M) {
-        if(i >= j) {
-          # block i, j (potentially block i, i)
-          VCfull[block[[i]], block[[j]]] <- td$scale[i] * td$scale[j] * VCfull[block[[i]], block[[j]]]
-          if(i > j) {
-            # symetric matrix, so also set block j, i
-            VCfull[block[[j]], block[[i]]] <- t(VCfull[block[[i]], block[[j]]])
-          }
-        }      
-      }
-    }
-  }
-  if(is.null(colnames(VCfull))) {
-    # renames
-    colnames(H_B_prime0) <- rownames(H_B_prime0) <- colnames(VCfull) <- rownames(VCfull) <- 1:nrow(H_B_prime0)
-    for(i in 1:M) {
-      rownames(H_B_prime0)[1:k + k*(i-1)] <- 
-        colnames(H_B_prime0)[1:k + k*(i-1)] <-
-        rownames(VCfull)[1:k + k*(i-1)] <-
-        colnames(VCfull)[1:k + k*(i-1)] <- paste0(colnames(object$coefficients), "_", names(object$X)[i])
-    }
-  }
-  # make a containder for scaled weights
-  scaledCoef <- rawCoef
-
-  # scale them
-  for(i in 1:M) {
-    scaledCoef[i, ] <- mml.remap.coef(rawCoef[i, ], td$location[i], td$scale[i])
-  }
-  # remap to weighted levels
-  compositeCoef <- coef(object)
-  compositeCoef <- coef.mmlCompositeMeans(object)
-  names(compositeCoef) <- colnames(object$coefficients)
-  VCsmall <- matrix(0, nrow=k, ncol=k)
-  for(i in 1:k) {
-    vi <- rep(0, k*M)
-    vi[i+((1:M)-1)*k] <- td$subtestWeight
-    for(j in 1:k) {
-      vj <- rep(0, k*M)
-      vj[j+((1:M)-1)*k] <- td$subtestWeight
-      VCsmall[i,j] <- t(vj) %*% VCfull %*% vi
-    }
-  }
-  # this is the composite VC
-  VC <- VCsmall
-  rownames(VC) <- colnames(VC) <- colnames(object$coefficients)
-  se <- sqrt(diag(VC))
- 
-  # this cannot be estimated
-  se[names(compositeCoef) == "Population SD"] <- NA
-  tval <- as.vector(compositeCoef/se)
-  TAB <- data.frame(Estimate = compositeCoef,
-               StdErr = se,
-               t.value = tval)
-  if(!missing("dof")) {
-    TAB$dof <- dof
-    TAB$"Pr(>|t|)" <- 2*(1-pt(abs(TAB$t.value), df=dof))
-  }
-  row.names(TAB) <- names(compositeCoef) 
-  res <- object
-  res$summaryCall <- sumCall
-  res$coefficients <- as.matrix(TAB)
-  res$VC <- VC
-  res$iHessian <- -1*H_B_prime0
-  res$weightedObs <- wo
-  res$VCfull <- VCfull
-  res$rawCoef <- rawCoef
-  class(res) <- "summary.mmlCompositeMeans"
-  return(res)
-}
 
 #' @method summary mmlMeans
 #' @export
-summary.mmlMeans <- function(object, gradientHessian=FALSE,
+summary.mmlMeans <- function(object, gradientHessian=TRUE,
                              varType=c("consistent", "robust", "cluster", "Taylor"),
                              clusterVar=NULL, jkSumMultiplier=1, # cluster
                              repWeight=NULL, # replicate
                              strataVar=NULL, PSUVar=NULL, singletonFix=c("drop", "use mean"),# Taylor
                              ...){
+  if(!missing(gradientHessian)) {
+    warning("gradientHessian has been deprecated. It is always TRUE now, meaning that the outer product of Hessians are used to estimate the Hessian matrix.")
+  }
+  object$rawCoef <- object$coef
   # check/fix varType argument
   # for EdSurvey 2.7.1 compatibility
   varType0 <- c("consistent", "robust", "cluster", "replicate", "Taylor")
@@ -321,7 +83,7 @@ summary.mmlMeans <- function(object, gradientHessian=FALSE,
   if(is.null(PSUVar)) {
     PSUVar <- object$PSUVar
   }
-  H_B_prime <- getIHessian.mmlMeans(object, gradientHessian)
+  H_B_prime <- getIHessian.mmlMeans(object)
   singletonFix <- match.arg(singletonFix)
   if(varType=="consistent") {
     VC <- getVarConsistent(object, H_B_prime)
@@ -374,12 +136,7 @@ summary.mmlMeans <- function(object, gradientHessian=FALSE,
     VC <- Tres$VC
     dof <- Tres$dof
   }
-  # called from summary.mmlCompositeMeans
-  if(inherits(object, "mmlCompositeMeans" )) {
-    return(structure(list("VC" = VC,
-                          "iHessian" = H_B_prime),
-                     class="summary.mmlMeans"))
-  }
+  VCtheta <- VC
   VC <- VC * object$scale^2
   se <- sqrt(diag(VC))
   tval <- as.vector(coef(object)/se)
@@ -405,7 +162,8 @@ summary.mmlMeans <- function(object, gradientHessian=FALSE,
                            "LL" = object$LogLik,
                            "VC" = VC,
                            "iHessian" = H_B_prime,
-                           "weightedObs" = wo))
+                           "weightedObs" = wo,
+                           "VCtheta" = VCtheta))
   class(object) <- "summary.mmlMeans"
   return(object)
 }
@@ -448,6 +206,200 @@ print.summary.mmlMeans <- function(x, ...){
   }
 } 
 
+
+#' @method summary mmlCompositeMeans
+#' @export
+#' @importFrom stats pt
+summary.mmlCompositeMeans <- function(object, gradientHessian=TRUE,
+                                      varType=c("Taylor", "Partial Taylor"),
+                                      strataVar=NULL, PSUVar=NULL, singletonFix=c("use mean", "drop"),# Taylor
+                                      verbose=0,
+                                      nint=10000,
+                                      JohnsonRust=FALSE,
+                                      ...){
+  sumCall <- match.call()
+  if(!missing(gradientHessian)) {
+    warning("gradientHessian has been deprecated. It is always TRUE now, meaning that the outer product of Hessians are used to estimate the Hessian matrix.")
+  }
+  # EdSurvey 2.7.1 compatibility
+  varType0 <- c("consistent", "robust", "cluster", "replicate", "Taylor")
+  if(length(varType) == length(varType0) && all(varType == varType0)) {
+    varType <- "Taylor"
+  }
+  varType <- match.arg(varType)
+  # get varType and singletonFix cleaned up
+  singletonFix <- match.arg(singletonFix)
+  if(is.null(strataVar)) {
+    if(is.null(object$strataVar) & varType %in% c("Taylor", "Partial Taylor")) {
+      stop(paste0("argument ", dQuote("strataVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
+    }
+    strataVar <- object$strataVar
+  }
+  if(is.null(PSUVar)) {
+    if(is.null(object$PSUVar) & varType %in% c("Taylor", "Partial Taylor")) {
+      stop(paste0("argument ", dQuote("PSUVar"), " must be included in the ", dQuote("mml"), " or ", dQuote("summary"), " call."))
+    }
+    PSUVar <- object$PSUVar
+  }
+  # first
+  k <- nrow(object$coefficients) 
+  p <- ncol(object$coefficients) - 1 # drop SD
+  rawCoef <- object$coefficients[,1:p,drop=FALSE]
+  # the H_B_prime0 and (later) VCfull are block diagonal matrixes
+  # "block" is a list where each element is every index for that block
+  block <- list()
+  for(i in 1:k) {
+    block <- c(block, list(1:p + p*(i-1)))
+  }
+  # build H_B_prime
+  H_B_prime0 <- matrix(0, nrow=p*k, ncol=p*k)
+  X <- object$resl[[1]]$getX(object$stuDat)
+  for(i in 1:k) {
+    if(verbose>0) {
+      message(paste0("Finding Hessian block ",i," of ", k))
+    }
+    if(gradientHessian) {
+      gr <- object$resl[[i]]$funcs$gr(object$coefficients[i,], sqrtW=TRUE)
+      H_B_prime0[block[[i]], block[[i]]] <- accumulator_outer_fast(X*gr)
+    } else {
+      H_B_prime0[block[[i]], block[[i]]] <- object$resl[[i]]$funcs$hess(object$coefficients[i,])
+    }
+  }
+  
+  # get weighted obs, if relevant
+  if(is.null(object$weightVar)) {
+    wo <- NA
+    w <- rep(1, nrow(object$stuDat))
+  } else {
+    wo <- object$weightedObs
+    w <- object$stuDat[,object$weightVar]
+  }
+  if(varType=="Partial Taylor") {
+    stop("Partial Taylor not implemented.")
+  } # end if(varType=="Partial Taylor")
+  if(varType=="Taylor") {
+    dof <- Inf
+    if(verbose > 0) {
+      message("start Taylor")
+    }
+    # there are many steps to getting the Taylor series. First,
+    # when k > 2 (and so to be general, always) we use the gradient from impwgtnD_add_ints
+    # that requires numerical quadrature at arbitrary points, so will add splines for rr1
+    if(verbose > 0) {
+      cat("interpolating response probabilities\n")
+    }
+    vls <- add_rr1_splines(object$values) 
+    if(verbose > 0) {
+      cat("finding expected values and covariances\n")
+    }
+    # we also need first guess expected values, variances, and covariances so the distribution
+    # is correctly centered for important weighting. These turn out to be very acruate despite being
+    # calculated based only on 2 dimensions at once
+    vls <- e_step_nD_by2D(vls) # find E, var, cov
+    if(verbose > 0) {
+      cat("forming unit-level covariance matricies\n")
+    }
+    # this is a convenience function that adds a per-unit sigma matrix
+    vls <- add_sigma_list(vls) # construct list of individual-level covariance matrixes
+    if(verbose > 0) {
+      cat("calculating numerical approximation to unit-level gradient\n")
+    }
+    # calculate importance weighting sample
+    # this allows the n/k-dimensional gradient to be calculated
+    # we sill use the gradient calculated in this step for the Taylor series
+    vls <- impwgt_nD_add_ints(vls, nint=nint, updateGr=TRUE)
+    # this updates sigma (per individual) in an n-dimensional
+    # way that leads to better condition numbers
+    object$values <- e_step_impwgt_nd(vls)
+    if(verbose > 0) {
+      cat("calculating Taylor Covariance matrix\n")
+    }
+    # get Taylor VC matrix
+    VC <- getVarTaylor2(object=object, H_B_prime = H_B_prime0,
+                        strataVar = strataVar, PSUVar = PSUVar,
+                        singletonFix = singletonFix, w=w, JohnsonRust=JohnsonRust)
+    Vi <- VC$VC
+    td <- object$testScale
+    # VCfull is the scale weighted full VC matrix
+    VCfull_theta <- Vi
+    VCfull <- Vi
+    for(i in 1:k) {
+      for(j in 1:k) {
+        if(i >= j) {
+          # block i, j (potentially block i, i)
+          VCfull[block[[i]], block[[j]]] <- td$scale[i] * td$scale[j] * VCfull[block[[i]], block[[j]]]
+          if(i > j) {
+            # symetric matrix, so also set block j, i
+            VCfull[block[[j]], block[[i]]] <- t(VCfull[block[[i]], block[[j]]])
+          }
+        }      
+      }
+    }
+  } # end if(varType="Taylor")
+  
+  if(is.null(colnames(VCfull))) {
+    # renames
+    colnames(H_B_prime0) <- rownames(H_B_prime0) <- colnames(VCfull) <- rownames(VCfull) <- 1:nrow(H_B_prime0)
+    # first, make sure these are unique
+    new_names <- c()
+    for(i in 1:k) {
+      new_names <- c(new_names, paste0(colnames(object$coefficients), "_", rownames(object$coefficients)[i]))
+    }
+    if(length(unique(new_names)) == length(new_names)) {
+      for(i in 1:k) {
+        rownames(H_B_prime0)[1:p + p*(i-1)] <- 
+          colnames(H_B_prime0)[1:p + p*(i-1)] <-
+          rownames(VCfull)[1:p + p*(i-1)] <-
+          colnames(VCfull)[1:p + p*(i-1)] <- paste0(colnames(rawCoef), "_", rownames(rawCoef)[i])
+      }
+    }
+  }
+  # make a containder for scaled weights
+  scaledCoef <- rawCoef
+  # scale them
+  for(i in 1:k) {
+    scaledCoef[i, ] <- mml.remap.coef(rawCoef[i, ], td$location[i], td$scale[i])
+  }
+  # remap to weighted levels
+  compositeCoef <- coef.mmlCompositeMeans(object)
+  names(compositeCoef) <- colnames(object$coefficients)
+  VCsmall <- matrix(0, nrow=p, ncol=p)
+  for(i in 1:p) {
+    vi <- rep(0, p*k)
+    vi[i+((1:k)-1)*p] <- td$subtestWeight
+    for(j in 1:p) {
+      vj <- rep(0, p*k)
+      vj[j+((1:k)-1)*p] <- td$subtestWeight
+      VCsmall[i,j] <- t(vj) %*% VCfull %*% vi
+    }
+  }
+  rownames(VCsmall) <- colnames(VCsmall) <- colnames(rawCoef)
+  se <- sqrt(diag(VCsmall))
+  se <- c(se, NA)
+  tval <- as.vector(compositeCoef/se)
+  TAB <- data.frame(Estimate = compositeCoef,
+                    StdErr = se,
+                    t.value = tval,
+                    dof = rep(VC$simple_dof, p+1))
+  if("dof" %in% colnames(TAB)) {
+    TAB$"Pr(>|t|)" <- 2*(1-pt(abs(TAB$t.value), df=dof))
+  }
+  row.names(TAB) <- names(compositeCoef) 
+  res <- object
+  res$summaryCall <- sumCall
+  res$coefficients <- as.matrix(TAB)
+  res$VC <- VC
+  res$iHessian <- -1*H_B_prime0
+  res$weightedObs <- wo
+  res$VCfull <- VCfull
+  res$rawCoef <- rawCoef
+  res$VCfull_theta <- VCfull_theta
+  class(res) <- "summary.mmlCompositeMeans"
+  return(res)
+}
+
+
+
 #' @method print summary.mmlCompositeMeans
 #' @export
 print.summary.mmlCompositeMeans <- function(x, ...){
@@ -473,81 +425,46 @@ print.summary.mmlCompositeMeans <- function(x, ...){
   }
 } 
 
-getIHessian.comp <- function(object) {
-  k <- length(object$X)
-  Xl <- object$X
-  co <- object$coefficients
-  p <- length(co)/k
-  Wsum <- rep(NA, k)
-  for(ki in 1:k) {
-    coki <- object$coefficients[1:p + p*(ki-1)]
-    X <- Xl[[ki]]
-    x_ind <- split(X, as.factor(1:nrow(X)), drop=FALSE)
-    # dl/dBeta * dl/dBeta ' evaluated for each individual 
-    stuDat <- object$stuDat[[ki]]
-    stuDat$one <- 1
-    weightVar <- object$weightVar
-    if(is.null(object$weightVar)) {
-      weightVar <- "one"
-    }
-    vars <- lapply(1:nrow(X), FUN=function(i) {
-      stuDat[i,weightVar] * gradInd(location=coki,
-                                    ii=i,
-                                    X_subset=matrix(x_ind[[i]], nrow=1),
-                                    weightVar="one",
-                                    rr1=object$rr1[[ki]],
-                                    stuDat=stuDat,
-                                    nodes=object$nodes)
-    })
-    varsMat <- data.frame(id=stuDat[,object$idVar], do.call(rbind, vars))
-    colnames(varsMat) <- c("id", paste0(ki,":",1:(ncol(varsMat)-1)))
-    if(ki == 1) {
-      varsMatOverall <- varsMat
-    } else {
-      varsMatOverall <- merge(varsMatOverall, varsMat, by="id", all=TRUE)
-    }
-    Wsum[ki] <- sum(stuDat[,weightVar])
+
+getIHessian.mmlMeans <- function(object) {
+  lnlf <- object$funcs$lnl
+  n <- nrow(object$stuDat)
+  x0 <- object$coefficients
+  K <- length(x0)
+  gr_mat <- matrix(0, nrow=n, ncol=K)
+  y0 <- lnlf(x0)
+  h <- (abs(x0) + 1) * sqrt(.Machine$double.eps)
+  if(is.null(object$weightVar)) {
+    weightVar <- "one"
+    object$stuDat[[ki]][["one"]] <- 1
   }
-  varsMatOverall[is.na(varsMatOverall)] <- 0
-  varsMatList <- split(varsMatOverall[,-1], varsMatOverall$id)
-  varsMatOuterList <- lapply(varsMatList, FUN=function(gri) {
-    gri <- as.numeric(gri)
-    gri %*% t(gri)
-  })
-  Wsum <- mean(Wsum)
-  H_B_prime <- -1 * Wsum/(Wsum-1) * solve(Reduce("+", varsMatOuterList))
-  return(H_B_prime)
+  w <- object$stuDat[[object$weightVar]]
+  for(ki in 1:K) {
+    xm2 <- xp2 <- xm1 <- xp1 <- x0
+    xp1[ki] <- x0[ki] + h[ki]
+    xp2[ki] <- x0[ki] + 2*h[ki]
+    xm1[ki] <- x0[ki] - h[ki]
+    xm2[ki] <- x0[ki] - 2*h[ki]
+    yp1 <- lnlf(xp1, returnCS=TRUE)
+    yp2 <- lnlf(xp2, returnCS=TRUE)
+    ym1 <- lnlf(xm1, returnCS=TRUE)
+    ym2 <- lnlf(xm2, returnCS=TRUE)
+    # sqrt(w) because it gets squared in the outher and should only occur w times
+    # -1 here 
+    gr_mat[ , ki] <- -1 * sqrt(w) * (ym2 - 8*ym1 + 8*yp1 - yp2) / (12*h[ki])
+  }
+  true_outer <- function(x) {
+    x %o% x
+  }
+
+  H <- accumulator_outer_cpp(gr_mat)
+  # previous line is the same as this:
+  #H <- Reduce("+", gg <- apply(gr_mat, 1, true_outer, simplify=FALSE))
+  Wsum <- sum(w)
+  H <- -1 * Wsum/(Wsum-1) * solve(nearPD2(H))
+  return(H)
 }
 
-getIHessian.mmlMeans <- function(object, gradientHessian=FALSE, returnVars=FALSE) {
-  if(gradientHessian) {
-    X <- object$X
-    x_ind <- split(X, as.factor(1:nrow(X)), drop=FALSE)
-    # dl/dBeta * dl/dBeta ' evaluated for each individual 
-    stuDat <- object$stuDat
-    stuDat$one <- 1
-    weightVar <- object$weightVar
-    if(is.null(object$weightVar)) {
-      weightVar <- "one"
-    }
-    vars <- lapply(1:nrow(X), FUN=function(i) {
-      stuDat[i,weightVar] * gradgradT(location=object$coefficients,
-                                      ii=i,
-                                      X_subset=matrix(x_ind[[i]], nrow=1),
-                                      weightVar="one",
-                                      rr1=object$rr1,
-                                      stuDat=stuDat,
-                                      nodes=object$nodes)
-    })
-    Wsum <- sum(stuDat[,weightVar])
-    H_B_prime <- -1 * Wsum/(Wsum-1) * solve(Reduce("+", vars))
-  } else {
-    # lnlf is actually the deviance function, so -1/2 maps it back to lnl
-    # text is the warning that will happen if nearPD2 finds a condition number over 400 and so warns the user about an unstable Hessian matrix.
-    H_B_prime <- solve(-1/2*nearPD2(getHessian(object$lnlf, object$coefficients), warn="Apparently singular Hessian matrix, standard error estimates are likely unstable."))
-  }
-  return(H_B_prime)
-}
 
 # estimate covariance matrix (Standard error)
 # -1/2 turns a deviance into a likelihood
@@ -557,7 +474,7 @@ getVarConsistent <- function(object, H_B_prime) {
 }
 
 getVarRobust <- function(object, H_B_prime) {
-  X <- object$X
+  X <- object$getX(object$stuDat)
   x_ind <- split(X, as.factor(1:nrow(X)), drop=FALSE)
   # dl/dBeta * dl/dBeta ' evaluated for each individual 
   object$stuDat$one <- 1
@@ -574,7 +491,7 @@ getVarRobust <- function(object, H_B_prime) {
 
 getVarCluster <- function(object, H_B_prime, clusterVar) {
   stuDat <- object$stuDat
-  X <- object$X
+  X <- object$getX(object$stuDat)
   # dl/dBeta * dl/dBeta ' evaluated for each group  before being multipled and then summed
   # first get list of each group index 
   #this is important to ensure group_index and x_group+s are in the same order
@@ -597,7 +514,7 @@ getVarCluster <- function(object, H_B_prime, clusterVar) {
 } 
 
 getVarReplicate <- function(object, H_B_prime, repWeight, jkSumMultiplier=1, returnVecs=FALSE) {
-  X <- object$X
+  X <- object$getX(object$stuDat)
   B0 <- object$coefficients
  
   B_j <- lapply(repWeight, FUN=function(x){ #restimate with each weight 
@@ -614,11 +531,10 @@ getVarReplicate <- function(object, H_B_prime, repWeight, jkSumMultiplier=1, ret
 
 getVarTaylor <- function(object, H_B_prime, strataVar, PSUVar,
                          singletonFix=c("drop", "use mean"),
-                         returnVecs=FALSE) {
+                         returnVecs=FALSE, progress_bar=NULL) {
   #find PSU per strata, and warn about dropping strata with one PSU
   singletonFix <- match.arg(singletonFix)
   stuDat <- object$stuDat
-  X <- object$X
   snames <- sort(unique(stuDat[[strataVar]]))
   strata <- lapply(snames, FUN=function(x) {
     list(strat=x,
@@ -638,6 +554,11 @@ getVarTaylor <- function(object, H_B_prime, strataVar, PSUVar,
   #only keep snames in strata 
   snames <- lapply(strata, function(x){x$strat}) 
   #split X based on psu for access later
+  if("X" %in% names(object)) {
+    X <- object$X
+  } else {
+    X <- object$getX(object$stuDat) # this object is created in the caller with X in it
+  }
   # loop through strata 
   str <- lapply(strata, FUN=function(st) {
     # number of PSUs in this stratum
@@ -650,7 +571,7 @@ getVarTaylor <- function(object, H_B_prime, strataVar, PSUVar,
     X_strata <- X[stuDat[[strataVar]] %in% st$strat, , drop=FALSE]
     stuDat_strata <- stuDat[stuDat[[strataVar]] %in% st$strat, , drop=FALSE]
     #split up data by PSU, lapply after the split, making each one a matrix
-    x_groups <- lapply(split(X_strata, stuDat_strata[[PSUVar]]), matrix, ncol=ncol(X))
+    x_groups <- lapply(split(X_strata, stuDat_strata[[PSUVar]]), matrix, ncol=ncol(X_strata))
     #vector of scores per psu
     s_p <- lapply(c(1:length(group_index)), FUN=function(k) {
       gradInd(location=object$coefficients,
@@ -683,6 +604,25 @@ getVarTaylor <- function(object, H_B_prime, strataVar, PSUVar,
     }
     return(st)
   }) # end lapply(strata, FUN=function(st) {
+  # find zeros, zeroV_a
+  zeroV_a <- NULL
+  zeros <- NULL
+  i <- 1
+  while(is.null(zeroV_a)) {
+    if(returnVecs) {
+      # if this is not present and V_a is, then we don't need zeros, it's okay for it to stay NULL
+      if(!is.null(str[[i]]$s)) {
+        zeros <- 0 * str[[i]]$s[[1]]
+      }
+    }
+    else {
+      if(!is.null(str[[i]]$V_a)) {
+        zeroV_a <- 0 * str[[i]]$V_a
+      }
+    }
+    i <- i + 1
+  }
+
   if(singletonFix %in% c("use mean")) {
     # get all strata's PSUs to find mean
     s_p_all <- list()
@@ -692,26 +632,6 @@ getVarTaylor <- function(object, H_B_prime, strataVar, PSUVar,
     # this is the overall average, across strata, should be zero
     n_all <- length(s_p_all)
     s_a_barOverall <- Reduce("+", s_p_all)/n_all
-  }
-  if(singletonFix=="drop") {
-    # when we reduce these, we will need a zero matrix
-    # so grab a valid V_a and multiply it by 0
-    zeroV_a <- NULL
-    zeros <- NULL
-    i <- 1
-    while(all(is.null(zeroV_a), is.null(zeros))) {
-      if(returnVecs) {
-        if(!is.null(str[[i]]$s)) {
-          zeros <- 0 * str[[i]]$s[[1]]
-        }
-      }
-      else {
-        if(!is.null(str[[i]]$V_a)) {
-          zeroV_a <- 0 * str[[i]]$V_a
-        }
-      }
-      i <- i + 1
-    }
   }
   if(returnVecs) {
     s <- lapply(str, FUN=function(st) {
@@ -767,6 +687,130 @@ getVarTaylor <- function(object, H_B_prime, strataVar, PSUVar,
   return(list(VC=res, dof=dof, simple_dof=simple_dof))
 }
 
+getVarTaylor2 <- function(object, H_B_prime, strataVar, PSUVar,
+                          singletonFix=c("drop", "use mean"), w, JohnsonRust=FALSE) {
+  #find PSU per strata, and warn about dropping strata with one PSU
+  singletonFix <- match.arg(singletonFix)
+  stuDat <- object$stuDat[,c(strataVar, PSUVar)]
+  snames <- sort(unique(stuDat[[strataVar]]))
+  strata <- lapply(snames, FUN=function(x) {
+    list(strat=x,
+         psu=sort(unique(stuDat[stuDat[,strataVar]==x, PSUVar])))
+  })
+  n_psu <- lapply(strata, function(x) { length(x$psu)}) 
+  simple_dof <- sum(unlist(n_psu)) - sum(length(strata))
+  if (any(n_psu==1)){
+    if(singletonFix == "drop") {
+      warning(paste0("Of the ", length(n_psu)," strata, ", sum(n_psu<2), " strata have only one PSU. All strata with only one PSU are excluded from variance estimation. See the ", dQuote("singletonFix"), " argument for other options."))
+      strata <- strata[n_psu>1] #variance estimation can only happen for Strata with more than one PSU 
+    }
+    if(singletonFix == "use mean") {
+      warning(paste0("Of the ", length(n_psu), " strata, ", sum(n_psu<2), " strata have only one PSU. All strata with only one PSU have their value compared to the mean. See the ", dQuote("singletonFix"), " argument for more details and other options."))
+    }
+  }
+  #only keep snames in strata 
+  snames <- lapply(strata, function(x){x$strat}) 
+  #split X based on psu for access later
+  if("getX" %in% names(object)) {
+    X <- object$getX(object$stuDat) # this object is created in the caller with X in it
+  } else if("X" %in% names(object)) {
+    X <- object$X[[1]]
+  } else {
+    X <- object$values$X
+  }
+  # loop through strata 
+  if(!"gr" %in% names(object$values)) {
+    stop("the values object must have an object named gr in it before you can calculate the Taylor series variance.")
+  }
+  grmat <- object$values$gr
+  if(nrow(grmat) != nrow(stuDat)) {
+    stop("the student data and grmat must agree on the number of rows to calculate the Taylor series variance.")
+  }
+  
+  str <- lapply(strata, FUN=function(st) {
+    # number of PSUs in this stratum
+    n_a <- length(st$psu)
+    # PSU index for units in this stratum and PSU
+    group_index <- lapply(st$psu, FUN=function(x) {
+      which(stuDat[[PSUVar]]==x & stuDat[[strataVar]]==st$strat)
+    })
+    s_p <- lapply(seq_along(group_index),  FUN=function(k) {
+      inds <- group_index[[k]]
+      # this is the gradient for the individuals in stratum st, group k
+      grmatk <- grmat[inds,,drop=FALSE]
+      Xk <- X[inds,,drop=FALSE]
+      wk <- w[inds] # the weights for this group
+      vecs <- lapply(1:ncol(Xk), function(i) {
+        # for the ith coefficient, you multiply the ith column by grmatk to get the gradient for this column
+        # it is summed across students to get the total gradient in the group
+        apply(wk * grmatk * Xk[,i], 2, sum)
+      })
+      mat <- do.call(rbind, vecs)
+      # as.vector turns a matrix into a vector "by column"
+      # and so this returns the stacked s_p vector for the composite
+      return(as.vector(mat))
+    })
+    st$s_p <- s_p 
+    if(n_a > 1) {
+      #average score across as psu in strata
+      s_a_bar <- Reduce("+",s_p)/n_a
+      #(s_p - s_a_bar)*(s_p - s_a_bar)' 
+      v_a <- lapply(s_p, FUN=function(s){
+        (s - s_a_bar) %*% t(s - s_a_bar)
+      })
+      st$V_a <- (n_a/(n_a-1))*Reduce("+",v_a)
+    } else {
+      if(singletonFix %in% "use mean") {
+        # the mean should be zero, so use that
+        v_a <- lapply(s_p, FUN=function(s){
+          s %*% s
+        })
+        st$V_a <- 2*Reduce("+", v_a)
+      }
+      if(singletonFix %in% "drop") {
+        k <- ncol(H_B_prime)
+        st$V_a <- matrix(0, nrow=k, ncol=k)
+      }
+    }
+    return(st)
+  }) # end lapply(strata, FUN=function(st) {
+  # when we reduce these, we will need a zero matrix
+  # so grab a valid V_a and multiply it by 0
+  zeroV_a <- NULL
+  i <- 1
+  while(is.null(zeroV_a)) {
+    if(!is.null(str[[i]]$V_a)) {
+      zeroV_a <- 0 * str[[i]]$V_a
+    }
+    i <- i + 1
+  }
+  # aggregate V_a
+  V <- zeroV_a
+  Vi <- zeroV_a
+  num2 <- num <- rep(0, ncol(H_B_prime))
+  numStrata <- 0
+  for(i in seq_along(str)) {
+    st <- str[[i]]
+    npsu <- length(st$psu)
+    if(npsu > 1) {
+      numStrata <- numStrata + 1
+    }
+    if(npsu > 1 || singletonFix != "drop") {
+      numi <- diag(Vii <- solve(H_B_prime) %*% st$V_a %*% solve(H_B_prime))
+    }
+    num <- num + numi 
+    num2 <- num2 + numi^2
+    Vi <- Vi + Vii
+  }
+  #sum variance across over all strata
+  m <- length(str)
+  dof <- num^2/num2
+  if(JohnsonRust) {
+    dof <- (3.16 - 2.77/sqrt(m)) * dof
+  }
+  return(list(VC=Vi, dof=dof, simple_dof=simple_dof))
+}
+
 # from EdSurvey
 # author: Paul Bailey
 pasteItems <- function(vector, final="and") {
@@ -807,13 +851,47 @@ vcov.mmlCompositeMeans <- function(object, ...){
   vcov(summary(object, ...))
 }
 
+#' @method subset scoredTest
+#' @export
+subset.scoredTest <- function(x, subset, select, drop=FALSE, ...) {
+  r <- eval(substitute(subset),x$stuDat)
+  x$stuDat <- x$stuDat[r, , drop=FALSE]
+  idVar <- x$idVar
+  uid <- x$stuDat[ , idVar]
+  x$stuItems <- x$stuItems[x$stuItems[ , idVar] %in% uid, ]
+  x$likelihood_list <- lapply(x$likelihood_list, function(z) {
+    # just those IDs in the new subset
+    z[z[ , idVar] %in% uid, ]
+  })
+  return(x)
+}
+
+#' @method subset reducedInformationScoredTest
+#' @export
+subset.reducedInformationScoredTest <- function(x, subset, select, drop=FALSE, ...) {
+  xi <- x$scored_test
+  r <- eval(substitute(subset),xi$stuDat)
+  xi$stuDat <- xi$stuDat[r, , drop=FALSE]
+  idVar <- xi$idVar
+  uid <- xi$stuDat[ , idVar]
+  xi$stuItems <- xi$stuItems[x$istuItems[ , idVar] %in% uid, ]
+  xi$likelihood_list <- lapply(xi$likelihood_list, function(z) {
+    # just those IDs in the new subset
+    z[z[ , idVar] %in% uid, ]
+  })
+  x$scored_test <- xi
+  return(x)
+}
+
 #' @method coef mmlCompositeMeans
 #' @export
 coef.mmlCompositeMeans <- function(object, ...) {
   M <- nrow(object$coefficients)
   k <- ncol(object$coefficients)
   rawCoef <- object$coefficients
+  rawCoef <- rawCoef[order(rownames(rawCoef)),]
   td <- object$testScale
+  td <- td[order(td$subtest),]
   tdWeight <- c()
   tdScale <- c()
   scaledCoef <- rawCoef
@@ -839,4 +917,22 @@ coef.mmlCompositeMeans <- function(object, ...) {
 coef.mmlMeans <- function(object, ...){
   co <- mml.remap.coef(object$coefficients, object$location, object$scale)
   co
+}
+
+getBareEnv <- function() {
+  blank_parent <- parent.env(.GlobalEnv)
+  default_env_names <- c("package:stats", "package:graphics", "package:grDevices", "package:utils", "package:datasets", "package:methods", "Autoloads", "package:base")
+  while(!attr(blank_parent,"name") %in% default_env_names ) {
+    blank_parent <- parent.env(blank_parent)
+  }
+  blank_env <-new.env(hash = TRUE, parent = blank_parent, size = 29L) 
+}
+reEnvFormula <- function(formula) {
+  formula_char <- as.character(formula)
+  blank_env <- getBareEnv()
+  if(length(formula_char)==2) {
+    return(formula(paste0(" ~ ",formula_char[2]),env=blank_env))
+  } else {
+    return(formula(paste0(formula_char[2]," ~ ",formula_char[3]),env=blank_env))
+  }
 }
