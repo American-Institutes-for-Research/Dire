@@ -265,6 +265,7 @@ summary.mmlCompositeMeans <- function(object, gradientHessian=TRUE,
       H_B_prime0[block[[i]], block[[i]]] <- object$resl[[i]]$funcs$hess(object$coefficients[i,])
     }
   }
+  H_B_prime0 <- nearPD2(H_B_prime0)
   
   # get weighted obs, if relevant
   if(is.null(object$weightVar)) {
